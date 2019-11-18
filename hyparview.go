@@ -76,10 +76,40 @@ func (v *Hyparview) RecvForwardJoin(node Node, ttl int, sender Node) (ms []Messa
 	return ms
 }
 
-func (v *Hyparview) DropRandActive() []Message {
-	ns := v.Active.Nodes
-	mx := len(v.Active.Nodes) - 1
+func (v *Hyparview) DropRandActive() (ms []Message) {
 	i := v.rint(mx)
-	ns = append(ns[0:i], ns[i+1:mx])
-	v.Active.Nodes = ms
+	node := v.Active.GetIndex(i)
+	v.Active.DelIndex(i)
+	v.Active.Add(node)
+	ms = append(ms, SendDisconnect(node, v.Self))
+	return ms
+}
+
+func (v *Hyparview) AddActive(node Node) (ms []Message) {
+	if node.Equal(v.Self) ||
+		node.Contains(node) {
+		return ms
+	}
+
+	if v.Active.IsFull() {
+		ms = DropRandActive()
+	}
+
+	v.Active.Add(node)
+	return ms
+}
+
+func (v *Hyparview) AddPassive(node Node) {
+	if node.Equal(v.Self) ||
+		v.Active.Contains(node) ||
+		v.Passive.Contains(node) {
+		return
+	}
+
+	if v.Passive.IsFull() {
+		i := v.rint(mx)
+		v.Passive.DelIndex(i)
+	}
+
+	v.Passive.Add(node)
 }
