@@ -119,7 +119,7 @@ func (v *Hyparview) AddPassive(node *Node) {
 	}
 
 	if v.Passive.IsFull() {
-		i := v.rint(v.Passive.Size())
+		i := rint(v.Passive.Size())
 		v.Passive.DelIndex(i)
 	}
 
@@ -129,8 +129,21 @@ func (v *Hyparview) AddPassive(node *Node) {
 // RecvDisconnect processes a disconnect, demoting the sender to the passive view
 func (v *Hyparview) RecvDisconnect(node *Node) {
 	idx := v.Active.ContainsIndex(node)
-	if idx > 0 {
+	if idx >= 0 {
 		v.Active.DelIndex(idx)
 		v.AddPassive(node)
 	}
+}
+
+// RecvNeighbor processes a neighbor, sent during failure recovery
+func (v *Hyparview) RecvNeighbor(priority Priority, node *Node) (ms []Message) {
+	if v.Active.IsFull() && priority == LowPriority {
+		ms = append(ms, SendNeighborRefuse(node, v.Self))
+		return ms
+	}
+	idx := v.Passive.ContainsIndex(node)
+	if idx >= 0 {
+		v.Passive.DelIndex(idx)
+	}
+	return v.AddActive(node)
 }
