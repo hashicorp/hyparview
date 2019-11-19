@@ -10,41 +10,48 @@ type Config struct {
 
 type Hyparview struct {
 	Config
-	Active  ActiveView
-	Passive PassiveView
-	Self    Node
+	Active  *ActiveView
+	Passive *ActiveView
+	Self    *Node
 }
 
-func CreateView(self Node, active int, passive int, activeRWL int, passiveRWL int) *Hyparview {
-	return Hyparview{
+// CreateView creates the view, does not start any process
+func CreateView(self *Node, active int, passive int, activeRWL int, passiveRWL int) *Hyparview {
+	return &Hyparview{
 		Config: Config{
 			ActiveRWL:   activeRWL,
 			ActiveSize:  active,
 			PassiveRWL:  activeRWL,
 			PassiveSize: passive,
 		},
-		Active:  Active{Nodes: []Node{}, Max: active},
-		Passive: Active{Nodes: []Node{}, Max: active},
+		Active:  CreateActiveView(active),
+		Passive: CreateActiveView(passive),
 		Self:    self,
 	}
 }
 
-func DefaultView(self Node, n size) *Hyparview {
+// DefaultView calls CreateView with the recommended values for a cluster of size n
+func DefaultView(self *Node, n int) *Hyparview {
 	return CreateView(self, 5, 30, 7, 5)
 }
 
-func (v *Hyparview) Recv(message *Message) {
-	switch Message.Command {
+// Recv dispatches the message, returning the resulting outgoing messages
+func (v *Hyparview) Recv(message *Message) (ms []Message) {
+	switch message.Action {
 	case Join:
-		ms := RecvJoin(Message.From)
+		ms = v.RecvJoin(message.From)
 	case ForwardJoin:
-		ms := RecvForwardJoin(Message.Data, Message.TTL, Message.From)
+		ms = v.RecvForwardJoin(message.Data, message.TTL, message.From)
+	case Disconnect:
+		v.RecvDisconnect(message.From)
 	}
+	return ms
 }
 
-func (v *Hyparview) RecvJoin(node Node) (ms []Message) {
+// RecvJoin processes a Join following the paper
+func (v *Hyparview) RecvJoin(node *Node) (ms []Message) {
 	if v.Active.IsFull() {
-		v.Active.DropRando()
+		v.DropRandActive()
 	}
 
 	v.Active.Add(node)
@@ -58,13 +65,12 @@ func (v *Hyparview) RecvJoin(node Node) (ms []Message) {
 	return ms
 }
 
-func (v *Hyparview) RecvForwardJoin(node Node, ttl int, sender Node) (ms []Message) {
-	if ttl == 0 || len(v.Active) == 0 {
-		v.Active.Add(node)
-	} else {
-		if ttl == v.PassiveRWL {
-			v.Passive.Add(node)
-		}
+// RecvForwardJoin processes a ForwardJoin following the paper
+func (v *Hyparview) RecvForwardJoin(node *Node, ttl int, sender *Node) (ms []Message) {
+	if ttl == 0 || v.Active.IsEmpty() {
+		ms = append(ms, v.AddActive(node)...)
+	} else if ttl == v.PassiveRWL {
+		v.AddPassive(node)
 	}
 
 	for _, n := range v.Active.Nodes {
@@ -76,8 +82,10 @@ func (v *Hyparview) RecvForwardJoin(node Node, ttl int, sender Node) (ms []Messa
 	return ms
 }
 
+// DropRandActive removes a random active peer and returns the disconnect message following
+// the paper
 func (v *Hyparview) DropRandActive() (ms []Message) {
-	i := v.rint(mx)
+	i := v.rint(v.Active.Size())
 	node := v.Active.GetIndex(i)
 	v.Active.DelIndex(i)
 	v.Active.Add(node)
@@ -85,21 +93,25 @@ func (v *Hyparview) DropRandActive() (ms []Message) {
 	return ms
 }
 
-func (v *Hyparview) AddActive(node Node) (ms []Message) {
+// AddActive adds a node to the active view, possibly dropping an active peer to make room.
+// Paper
+func (v *Hyparview) AddActive(node *Node) (ms []Message) {
 	if node.Equal(v.Self) ||
-		node.Contains(node) {
+		v.Active.Contains(node) {
 		return ms
 	}
 
 	if v.Active.IsFull() {
-		ms = DropRandActive()
+		ms = v.DropRandActive()
 	}
 
 	v.Active.Add(node)
 	return ms
 }
 
-func (v *Hyparview) AddPassive(node Node) {
+// AddPassive adds a node to the passive view, possibly dropping a passive peer to make
+// room. Paper
+func (v *Hyparview) AddPassive(node *Node) {
 	if node.Equal(v.Self) ||
 		v.Active.Contains(node) ||
 		v.Passive.Contains(node) {
@@ -107,9 +119,18 @@ func (v *Hyparview) AddPassive(node Node) {
 	}
 
 	if v.Passive.IsFull() {
-		i := v.rint(mx)
+		i := v.rint(v.Passive.Size())
 		v.Passive.DelIndex(i)
 	}
 
 	v.Passive.Add(node)
+}
+
+// RecvDisconnect processes a disconnect, demoting the sender to the passive view
+func (v *Hyparview) RecvDisconnect(node *Node) {
+	idx := v.Active.ContainsIndex(node)
+	if idx > 0 {
+		v.Active.DelIndex(idx)
+		v.AddPassive(node)
+	}
 }

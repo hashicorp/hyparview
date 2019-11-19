@@ -1,15 +1,30 @@
 package hyparview
 
 type ActiveView struct {
-	Nodes []Node
+	Nodes []*Node
 	Max   int
+}
+
+func CreateActiveView(size int) *ActiveView {
+	return &ActiveView{
+		Nodes: []*Node{},
+		Max:   size,
+	}
+}
+
+func (v *ActiveView) IsEmpty() bool {
+	return len(v.Nodes) == 0
 }
 
 func (v *ActiveView) IsFull() bool {
 	return len(v.Nodes) >= v.Max
 }
 
-func (v *ActiveView) Add(n Node) {
+func (v *ActiveView) Size() int {
+	return len(v.Nodes)
+}
+
+func (v *ActiveView) Add(n *Node) {
 	if !v.Contains(n) {
 		v.Nodes = append(v.Nodes, n)
 	}
@@ -21,15 +36,19 @@ func (v *ActiveView) DelIndex(i int) {
 	v.Nodes = append(ns[0:i], ns[i+1:mx]...)
 }
 
-func (v *ActiveView) GetIndex(i int) Node {
+func (v *ActiveView) GetIndex(i int) *Node {
 	return v.Nodes[i]
 }
 
-func (v *ActiveView) Contains(n Node) bool {
-	for _, m := range v.Nodes {
+func (v *ActiveView) ContainsIndex(n *Node) int {
+	for i, m := range v.Nodes {
 		if m.Equal(n) {
-			return false
+			return i
 		}
 	}
-	return true
+	return -1
+}
+
+func (v *ActiveView) Contains(n *Node) bool {
+	return v.ContainsIndex(n) > 0
 }

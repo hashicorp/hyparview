@@ -9,7 +9,7 @@ import (
 // rint returns a random integer, but allows to choose at configure time to use the pseudo
 // random or cryptographic random number generator
 func (v *Hyparview) rint(n int) int {
-	if c.CryptoRand {
+	if v.CryptoRand {
 		bn := new(big.Int).SetInt64(int64(n))
 		bi, _ := cr.Int(cr.Reader, bn)
 		i := int(bi.Int64())
