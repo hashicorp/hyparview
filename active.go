@@ -40,6 +40,24 @@ func (v *ActiveView) GetIndex(i int) *Node {
 	return v.Nodes[i]
 }
 
+func (v *ActiveView) Shuffled() []*Node {
+	l := len(v.Nodes)
+	ns := make([]*Node, l)
+	for i := l - 1; i > 0; i-- {
+		j := rint(i)
+		ns[i], ns[j] = v.Nodes[j], v.Nodes[i]
+	}
+	return ns
+}
+
+// func (v *ActiveView) RandIndex() int {
+// 	return rint(len(v.Nodes) - 1)
+// }
+
+// func (v *ActiveView) RandNode() *Node {
+// 	return v.Nodes[v.RandIndex()]
+// }
+
 func (v *ActiveView) ContainsIndex(n *Node) int {
 	for i, m := range v.Nodes {
 		if m.Equal(n) {
