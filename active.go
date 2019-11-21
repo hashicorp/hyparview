@@ -43,9 +43,11 @@ func (v *ActiveView) GetIndex(i int) *Node {
 func (v *ActiveView) Shuffled() []*Node {
 	l := len(v.Nodes)
 	ns := make([]*Node, l)
+	// Start with a copy, fischer-yates needs to operate destructively
+	copy(ns, v.Nodes)
 	for i := l - 1; i > 0; i-- {
 		j := rint(i)
-		ns[i], ns[j] = v.Nodes[j], v.Nodes[i]
+		ns[i], ns[j] = ns[j], ns[i]
 	}
 	return ns
 }
