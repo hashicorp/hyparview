@@ -1,11 +1,12 @@
 package hyparview
 
 type Config struct {
-	ActiveSize  int
-	ActiveRWL   int
-	PassiveSize int
-	PassiveRWL  int
-	CryptoRand  bool
+	ActiveSize     int
+	ActiveRWL      int
+	PassiveSize    int
+	PassiveRWL     int
+	ShuffleActive  int
+	ShufflePassive int
 }
 
 type Hyparview struct {
@@ -13,26 +14,25 @@ type Hyparview struct {
 	Active  *ActiveView
 	Passive *ActiveView
 	Self    *Node
+	Shuffle *ShuffleRequest
 }
 
-// CreateView creates the view, does not start any process
-func CreateView(self *Node, active int, passive int, activeRWL int, passiveRWL int) *Hyparview {
+// CreateView creates the view. Configuration is recommendations based on the cluster size
+// n. Does not start any process.
+func CreateView(self *Node, n int) *Hyparview {
 	return &Hyparview{
 		Config: Config{
-			ActiveRWL:   activeRWL,
-			ActiveSize:  active,
-			PassiveRWL:  activeRWL,
-			PassiveSize: passive,
+			ActiveRWL:      7,
+			ActiveSize:     5,
+			PassiveRWL:     5,
+			PassiveSize:    30,
+			ShuffleActive:  3,
+			ShufflePassive: 15,
 		},
-		Active:  CreateActiveView(active),
-		Passive: CreateActiveView(passive),
+		Active:  CreateActiveView(5),
+		Passive: CreateActiveView(30),
 		Self:    self,
 	}
-}
-
-// DefaultView calls CreateView with the recommended values for a cluster of size n
-func DefaultView(self *Node, n int) *Hyparview {
-	return CreateView(self, 5, 30, 7, 5)
 }
 
 // Recv dispatches the message, returning the resulting outgoing messages
@@ -146,4 +146,25 @@ func (v *Hyparview) RecvNeighbor(priority Priority, node *Node) (ms []Message) {
 		v.Passive.DelIndex(idx)
 	}
 	return v.AddActive(node)
+}
+
+// SendShuffle creates the periodic state to mark and message for maintaining the passive
+// view. Paper
+func (v *Hyparview) SendShuffle(node *Node) (ms []Message) {
+	ns := []*Node{v.Self}
+	as := v.Active.Shuffled()[0:v.ShuffleActive]
+	ps := v.Passive.Shuffled()[0:v.ShufflePassive]
+	// ns = append(ns, as...)
+	// ns = append(ns, ps...)
+
+	req := ShuffleRequest{
+		To:      node,
+		From:    v.Self,
+		Active:  as,
+		Passive: ps,
+	}
+
+	v.Shuffle = &req
+
+	return append(ms, req)
 }

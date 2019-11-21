@@ -3,6 +3,10 @@ package hyparview
 type Action string
 type Priority int
 
+type Message interface {
+	From() *Node
+}
+
 type Message struct {
 	To     *Node
 	From   *Node
@@ -62,4 +66,15 @@ func SendNeighborRefuse(to *Node, from *Node) Message {
 		To:     to,
 		From:   from,
 	}
+}
+
+type ShuffleRequest struct {
+	To      *Node
+	From    *Node
+	Active  []*Node
+	Passive []*Node
+}
+
+func (m *ShuffleRequest) From() *Node {
+	return m.From
 }
