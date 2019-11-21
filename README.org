@@ -7,3 +7,5 @@
 - >90% of members have to fail before manual intervention is required
   to restore the cluster
 - [[https://www.semanticscholar.org/paper/HyParView%253A-A-Membership-Protocol-for-Reliable-Leit%C3%A3o-Pereira/a2562ede25e8ed2c7c1d888d72b625a526b3b25a][Paper]] in production in [[http://partisan.cloud][Partisan]]
+- Side goal: demonstrate separation of state changes from async or
+  mutex behavior to improve testing options
