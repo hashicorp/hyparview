@@ -11,8 +11,8 @@ type Config struct {
 
 type Hyparview struct {
 	Config
-	Active  *ActiveView
-	Passive *ActiveView
+	Active  *ViewPart
+	Passive *ViewPart
 	Self    *Node
 	Shuffle *ShuffleRequest
 }
@@ -29,8 +29,8 @@ func CreateView(self *Node, n int) *Hyparview {
 			ShuffleActive:  3,
 			ShufflePassive: 15,
 		},
-		Active:  CreateActiveView(5),
-		Passive: CreateActiveView(30),
+		Active:  CreateViewPart(5),
+		Passive: CreateViewPart(30),
 		Self:    self,
 	}
 }
