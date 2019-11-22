@@ -1,6 +1,8 @@
 * What's This?
 
-- Rogue project, one plane ride long
+- Rogue project, total length:
+  - one plane ride
+  - one beer at local taphouse
 - Partial membership for gossip clusters
 - 10k node cluster requires 5 active and 30 passive peers in views at
   each node
@@ -12,8 +14,9 @@
 
 * Roadmap
 
-- [ ] Rename active, it defines both windows
-- [ ] Unique types for all the messages, for grpc
+- [X] Rename active, it defines both windows
+- [X] Unique types for all the messages, for grpc
+- [X] RecvShuffle
 - [ ] Client simulation v0
   - [ ] Graph connection test
   - [ ] Intermittent failures
