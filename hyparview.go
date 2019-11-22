@@ -65,16 +65,23 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 
 	if ttl == 0 || v.Active.IsEmpty() {
 		ms = append(ms, v.AddActive(node)...)
-	} else if ttl == v.PassiveRWL {
+		// stop on active empty because who else am I going to send it to
+		return ms
+	}
+
+	if ttl == v.PassiveRWL {
 		v.AddPassive(node)
 	}
 
-	for _, n := range v.Active.Nodes {
+	// Forward to one not-sender active peer
+	for _, n := range v.Active.Shuffled() {
 		if n.Equal(sender) {
 			continue
 		}
 		ms = append(ms, SendForwardJoin(n, v.Self, node, ttl-1))
+		break
 	}
+
 	return ms
 }
 
