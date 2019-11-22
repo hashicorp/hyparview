@@ -9,3 +9,15 @@
 - [[https://www.semanticscholar.org/paper/HyParView%253A-A-Membership-Protocol-for-Reliable-Leit%C3%A3o-Pereira/a2562ede25e8ed2c7c1d888d72b625a526b3b25a][Paper]] in production in [[http://partisan.cloud][Partisan]]
 - Side goal: demonstrate separation of state changes from async or
   mutex behavior to improve testing options
+
+* Roadmap
+
+- [ ] Rename active, it defines both windows
+- [ ] Unique types for all the messages, for grpc
+- [ ] Client simulation v0
+  - [ ] Graph connection test
+  - [ ] Intermittent failures
+  - [ ] Keep the random seed for replay
+- [ ] Live client example
+  - [ ] grpc
+  - [ ] TLS
