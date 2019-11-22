@@ -52,7 +52,7 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 		if n.Equal(r.From) {
 			continue
 		}
-		ms = append(ms, SendForwardJoin(n, r.From, v.ActiveRWL, v.Self))
+		ms = append(ms, SendForwardJoin(n, v.Self, r.From, v.ActiveRWL))
 	}
 	return ms
 }
@@ -73,7 +73,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 		if n.Equal(sender) {
 			continue
 		}
-		ms = append(ms, SendForwardJoin(n, node, ttl-1, v.Self))
+		ms = append(ms, SendForwardJoin(n, v.Self, node, ttl-1))
 	}
 	return ms
 }

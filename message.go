@@ -32,7 +32,7 @@ type ForwardJoinRequest struct {
 
 func (r *ForwardJoinRequest) To() *Node { return r.to }
 
-func SendForwardJoin(to *Node, join *Node, ttl int, from *Node) *ForwardJoinRequest {
+func SendForwardJoin(to *Node, from *Node, join *Node, ttl int) *ForwardJoinRequest {
 	return &ForwardJoinRequest{
 		to:   to,
 		From: from,
@@ -63,7 +63,7 @@ type NeighborRequest struct {
 
 func (r *NeighborRequest) To() *Node { return r.to }
 
-func SendNeighbor(to *Node, priority bool, from *Node) *NeighborRequest {
+func SendNeighbor(to *Node, from *Node, priority bool) *NeighborRequest {
 	return &NeighborRequest{
 		to:       to,
 		From:     from,
