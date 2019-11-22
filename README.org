@@ -2,7 +2,7 @@
 
 - Rogue project (aka push directly to master), total time spent:
   - one plane ride
-  - one beer at local taphouse
+  - +one+ two beers at local taphouse
 - Partial membership for gossip clusters
 - 10k node cluster requires 5 active and 30 passive peers in views at
   each node
