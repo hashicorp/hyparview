@@ -1,80 +1,115 @@
 package hyparview
 
-type Action string
-type Priority int
-
 type Message interface {
-	From() *Node
-}
-
-type Message struct {
-	To     *Node
-	From   *Node
-	Data   *Node
-	Action Action
-	TTL    int
+	To() *Node
 }
 
 const (
-	Join           = "j"
-	ForwardJoin    = "f"
-	Disconnect     = "d"
-	Neighbor       = "n"
-	NeighborRefuse = "r"
-	HighPriority   = 1
-	LowPriority    = 0
+	HighPriority = true
+	LowPriority  = false
 )
 
-func SendJoin(to *Node, from *Node) Message {
-	return Message{
-		Action: Join,
-		To:     to,
-		From:   from,
+type JoinRequest struct {
+	to   *Node
+	From *Node
+}
+
+func (r *JoinRequest) To() *Node { return r.to }
+
+func SendJoin(to *Node, from *Node) JoinRequest {
+	return JoinRequest{
+		to:   to,
+		From: from,
 	}
 }
 
-func SendForwardJoin(to *Node, payload *Node, ttl int, from *Node) Message {
-	return Message{
-		Action: ForwardJoin,
-		To:     to,
-		From:   from,
-		Data:   payload,
-		TTL:    ttl,
+type ForwardJoinRequest struct {
+	to   *Node
+	From *Node
+	Join *Node
+	TTL  int
+}
+
+func (r *ForwardJoinRequest) To() *Node { return r.to }
+
+func SendForwardJoin(to *Node, join *Node, ttl int, from *Node) *ForwardJoinRequest {
+	return &ForwardJoinRequest{
+		to:   to,
+		From: from,
+		Join: join,
+		TTL:  ttl,
 	}
 }
 
-func SendDisconnect(to *Node, from *Node) Message {
-	return Message{
-		Action: Disconnect,
-		To:     to,
-		From:   from,
+type DisconnectRequest struct {
+	to   *Node
+	From *Node
+}
+
+func (r *DisconnectRequest) To() *Node { return r.to }
+
+func SendDisconnect(to *Node, from *Node) *DisconnectRequest {
+	return &DisconnectRequest{
+		to:   to,
+		From: from,
 	}
 }
 
-func SendNeighbor(to *Node, priority Priority, from *Node) Message {
-	return Message{
-		Action: Neighbor,
-		To:     to,
-		From:   from,
-		TTL:    int(priority),
+type NeighborRequest struct {
+	to       *Node
+	From     *Node
+	Priority bool
+}
+
+func (r *NeighborRequest) To() *Node { return r.to }
+
+func SendNeighbor(to *Node, priority bool, from *Node) *NeighborRequest {
+	return &NeighborRequest{
+		to:       to,
+		From:     from,
+		Priority: priority,
 	}
 }
 
-func SendNeighborRefuse(to *Node, from *Node) Message {
-	return Message{
-		Action: NeighborRefuse,
-		To:     to,
-		From:   from,
+type NeighborRefuse struct {
+	to   *Node
+	From *Node
+}
+
+func (r *NeighborRefuse) To() *Node { return r.to }
+
+func SendNeighborRefuse(to *Node, from *Node) *NeighborRefuse {
+	return &NeighborRefuse{
+		to:   to,
+		From: from,
 	}
 }
 
 type ShuffleRequest struct {
-	To      *Node
+	to      *Node
+	From    *Node
+	Active  []*Node
+	Passive []*Node
+	TTL     int
+}
+
+func (m *ShuffleRequest) To() *Node { return m.to }
+
+func SendShuffle(to *Node, from *Node, active []*Node, passive []*Node, ttl int) *ShuffleRequest {
+	return &ShuffleRequest{
+		to:      to,
+		From:    from,
+		Active:  active,
+		Passive: passive,
+		TTL:     ttl,
+	}
+}
+
+type ShuffleReply struct {
+	to      *Node
 	From    *Node
 	Active  []*Node
 	Passive []*Node
 }
 
-func (m *ShuffleRequest) From() *Node {
-	return m.From
-}
+func (m *ShuffleRequest) To() *Node { return m.to }

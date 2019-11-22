@@ -52,13 +52,13 @@ func (v *ViewPart) Shuffled() []*Node {
 	return ns
 }
 
-// func (v *ViewPart) RandIndex() int {
-// 	return rint(len(v.Nodes) - 1)
-// }
+func (v *ViewPart) RandIndex() int {
+	return rint(len(v.Nodes) - 1)
+}
 
-// func (v *ViewPart) RandNode() *Node {
-// 	return v.Nodes[v.RandIndex()]
-// }
+func (v *ViewPart) RandNode() *Node {
+	return v.Nodes[v.RandIndex()]
+}
 
 func (v *ViewPart) ContainsIndex(n *Node) int {
 	for i, m := range v.Nodes {
