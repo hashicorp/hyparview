@@ -108,8 +108,15 @@ func SendShuffle(to *Node, from *Node, active []*Node, passive []*Node, ttl int)
 type ShuffleReply struct {
 	to      *Node
 	From    *Node
-	Active  []*Node
 	Passive []*Node
 }
 
-func (m *ShuffleRequest) To() *Node { return m.to }
+func (m *ShuffleReply) To() *Node { return m.to }
+
+func SendShuffleReply(to *Node, from *Node, passive []*Node) *ShuffleReply {
+	return &ShuffleReply{
+		to:      to,
+		From:    from,
+		Passive: passive,
+	}
+}
