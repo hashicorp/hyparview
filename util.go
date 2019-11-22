@@ -13,8 +13,7 @@ func rintCrypto(n int) int {
 	return i
 }
 
-// rint returns a random integer, but allows to choose at configure time to use the pseudo
-// random or cryptographic random number generator
+// rint is a placeholder so we can swap out for rintCrypto in testing
 func rint(n int) int {
 	return rand.Intn(n)
 }
