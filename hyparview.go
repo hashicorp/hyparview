@@ -165,8 +165,8 @@ func (v *Hyparview) RecvNeighbor(r *NeighborRequest) (ms []Message) {
 // SendShuffle creates the periodic state to mark and message for maintaining the passive
 // view. Paper
 func (v *Hyparview) SendShuffle(node *Node) (ms []Message) {
-	as := v.Active.Shuffled()[0:v.ShuffleActive]
-	ps := v.Passive.Shuffled()[0:v.ShufflePassive]
+	as := v.Active.Shuffled()[:v.ShuffleActive]
+	ps := v.Passive.Shuffled()[:v.ShufflePassive]
 	m := SendShuffle(node, v.Self, as, ps, v.RWL.Shuffle)
 	v.Shuffle = m
 	return append(ms, m)
@@ -174,9 +174,8 @@ func (v *Hyparview) SendShuffle(node *Node) (ms []Message) {
 
 // RecvShuffle processes a shuffle request. Paper
 func (v *Hyparview) RecvShuffle(r *ShuffleRequest) (ms []Message) {
-	if r.TTL > 0 ||
-		!v.Active.IsEmpty() { // FIXME this may be 1
-		m := SendShuffle(v.Active.RandNode(), v.Self, r.Active, r.Passive, r.TTL+1)
+	if r.TTL >= 0 && !v.Active.IsEmpty() { // FIXME this may be 1
+		m := SendShuffle(v.Active.RandNode(), r.From, r.Active, r.Passive, r.TTL-1)
 		ms = append(ms, m)
 		return ms
 	}
@@ -189,7 +188,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) (ms []Message) {
 	}
 
 	ps := v.Passive.Shuffled()[0:l]
-	ms = append(ms, SendShuffleReply(r.To(), v.Self, ps))
+	ms = append(ms, SendShuffleReply(r.From, v.Self, ps))
 
 	// Keep the new passive peers
 	// recvShuffle is going to destructively use this
@@ -216,16 +215,30 @@ func (v *Hyparview) addShuffle(n *Node, sent []*Node) {
 	}
 
 	if v.Passive.IsFull() {
+		i := -1
 		if len(sent) > 0 {
-			i := v.Passive.ContainsIndex(sent[0])
-			v.Passive.DelIndex(i)
-			sent = sent[1:]
+			i = v.Passive.ContainsIndex(sent[0])
 		}
-
-		v.Passive.DelIndex(v.Passive.RandIndex())
+		if i > 0 {
+			sent = sent[1:]
+		} else {
+			i = v.Passive.RandIndex()
+		}
+		v.Passive.DelIndex(i)
 	}
 
 	v.Passive.Add(n)
+}
+
+func (v *Hyparview) RecvShuffleReply(r *ShuffleReply) {
+	var sent []*Node
+	if v.Shuffle != nil {
+		sent = v.Shuffle.Passive
+	}
+	v.Shuffle = nil
+	for _, n := range r.Passive {
+		v.addShuffle(n, sent)
+	}
 }
 
 // Recv is a helper method that dispatches to the correct recv
@@ -249,6 +262,8 @@ func (v *Hyparview) Recv(m Message) (ms []Message) {
 		return v.RecvNeighbor(m1)
 	case *ShuffleRequest:
 		return v.RecvShuffle(m1)
+	case *ShuffleReply:
+		v.RecvShuffleReply(m1)
 	default:
 		// log unimplemented?
 	}
