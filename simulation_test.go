@@ -88,24 +88,9 @@ func create(id string) *Client {
 	return c
 }
 
-// func (w *World) join(self string, contact string) {
-// 	ms := w.get(contact).RecvJoin(&JoinRequest{
-// 		to:   contact,
-// 		From: self,
-// 	})
-// 	w.send(ms)
-// }
-
 func doFail(percentage int) bool {
 	return rint(100) < percentage
 }
-
-// func (w *World) stepActive() {
-// 	v := w.nextShuffled()
-// 	for _, m := range v.out {
-
-// 	}
-// }
 
 func (w *World) get(id string) *Client {
 	return w.nodes[id]
@@ -117,12 +102,6 @@ func (w *World) sendOne(m Message) {
 
 func (w *World) send(ms []Message) {
 	w.queue = append(w.queue, ms...)
-	// qs, ok := w.queue[m.To()]
-	// if !ok {
-	// 	qs = make([]Message)
-	// 	w.queue[m.To()] = qs
-	// }
-	// copy(qs, ms)
 }
 
 // drain the queue, appending resulting messages back onto the queue
