@@ -1,13 +1,17 @@
 package hyparview
 
+type ConfigRandomWalkLength struct {
+	Active  int
+	Passive int
+	Shuffle int
+}
+
 type Config struct {
 	ActiveSize     int
-	ActiveRWL      int
 	PassiveSize    int
-	PassiveRWL     int
 	ShuffleActive  int
 	ShufflePassive int
-	ShuffleRWL     int
+	RWL            ConfigRandomWalkLength
 }
 
 type Hyparview struct {
@@ -26,13 +30,15 @@ func CreateView(self *Node, n int) *Hyparview {
 
 	return &Hyparview{
 		Config: Config{
-			ActiveRWL:      6,
 			ActiveSize:     active,
-			PassiveRWL:     3,
 			PassiveSize:    passive,
 			ShuffleActive:  3,
-			ShufflePassive: 15,
-			ShuffleRWL:     3,
+			ShufflePassive: 4,
+			RWL: ConfigRandomWalkLength{
+				Active:  6,
+				Passive: 3,
+				Shuffle: 6,
+			},
 		},
 		Active:  CreateViewPart(active),
 		Passive: CreateViewPart(passive),
@@ -52,7 +58,7 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 		if n.Equal(r.From) {
 			continue
 		}
-		ms = append(ms, SendForwardJoin(n, v.Self, r.From, v.ActiveRWL))
+		ms = append(ms, SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
 	}
 	return ms
 }
@@ -69,7 +75,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 		return ms
 	}
 
-	if ttl == v.PassiveRWL {
+	if ttl == v.RWL.Passive {
 		v.AddPassive(node)
 	}
 
@@ -159,7 +165,7 @@ func (v *Hyparview) RecvNeighbor(r *NeighborRequest) (ms []Message) {
 func (v *Hyparview) SendShuffle(node *Node) (ms []Message) {
 	as := v.Active.Shuffled()[0:v.ShuffleActive]
 	ps := v.Passive.Shuffled()[0:v.ShufflePassive]
-	m := SendShuffle(node, v.Self, as, ps, v.ShuffleRWL)
+	m := SendShuffle(node, v.Self, as, ps, v.RWL.Shuffle)
 	v.Shuffle = m
 	return append(ms, m)
 }
@@ -218,4 +224,22 @@ func (v *Hyparview) addShuffle(n *Node, sent []*Node) {
 	}
 
 	v.Passive.Add(n)
+}
+
+// Recv is a helper method that dispatches to the correct recv
+func (v *Hyparview) Recv(m Message) []Message {
+	switch m1 := m.(type) {
+	case JoinRequest:
+		return v.RecvJoin(&m1)
+	case ForwardJoinRequest:
+		return v.RecvForwardJoin(&m1)
+	case DisconnectRequest:
+		return v.RecvDisconnect(&m1)
+	case NeighborRequest:
+		return v.RecvNeighbor(&m1)
+	case ShuffleRequest:
+		return v.RecvShuffle(&m1)
+	default:
+		// log unimplemented?
+	}
 }
