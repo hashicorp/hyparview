@@ -17,10 +17,20 @@
 - [X] Rename active, it defines both windows
 - [X] Unique types for all the messages, for grpc
 - [X] RecvShuffle
-- [ ] Client simulation v0
-  - [ ] Graph connection test
+- [-] Client simulation v0
+  - [X] Graph connection test
   - [ ] Intermittent failures
   - [ ] Keep the random seed for replay
 - [ ] Live client example
   - [ ] grpc
   - [ ] TLS
+
+* Simulation
+
+- [X] Create & join nodes
+: ActiveSize * RWL.Active ForwardJoinRequests => 30
+- [X] Shuffle
+: 1 + RWL.Shuffle + ShuffleReply => 8 (needs 9...)
+- [ ] Maintain active view (rejoin when empty)
+- [ ] Active failures
+- [ ] Request failures
