@@ -7,18 +7,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type ConfigFailureRate struct {
+type WorldFailureRate struct {
 	active  int
 	shuffle int
 	reply   int
 }
 
-type Config struct {
+type WorldConfig struct {
 	rounds     int
 	peers      int
 	mortality  int
 	drainDepth int
-	fail       ConfigFailureRate
+	fail       WorldFailureRate
 }
 
 type Client struct {
@@ -28,45 +28,48 @@ type Client struct {
 }
 
 type World struct {
-	nodes  map[string]*Client
-	morgue map[string]int
-	queue  []Message
+	nodes map[string]*Client
+	// morgue map[string]*Client
+	queue []Message
 }
 
-func simulation(c Config) *World {
+func simulation(c WorldConfig) *World {
 	w := &World{
 		nodes: make(map[string]*Client, c.peers),
-		morge: make(map[string]*Client),
-		queue: make([]Message),
+		// morgue: make(map[string]*Client),
+		queue: make([]Message, 0),
 	}
 
 	// make all the nodes
 	for i := 1; i <= c.peers; i++ {
-		w.node[i] = create(fmt.Sprintf("peer%06d", i))
+		id := fmt.Sprintf("n%d", i)
+		w.nodes[id] = create(id)
 	}
 
 	for i := 1; i <= c.rounds; i++ {
-		ns := w.node.keys()
+		ns := w.nodeKeys()
 		shuffle(ns)
 		root := w.get(ns[0])
 		ns = ns[1:]
 
 		for _, id := range ns {
 			me := w.get(id)
-			w.send(root.Recv(SendJoin(root.self, me.self)))
+			w.send(root.Recv(SendJoin(root.Self, me.Self)))
 			w.drain(c.drainDepth)
 		}
 
 		w.drainAll()
 	}
+
+	return w
 }
 
 func TestSimulation(t *testing.T) {
-	w := simulation(Config{
+	w := simulation(WorldConfig{
 		rounds:    50,
 		peers:     100,
 		mortality: 30,
-		fail: ConfigFailureRate{
+		fail: WorldFailureRate{
 			active:  30,
 			shuffle: 30,
 			reply:   30,
@@ -79,33 +82,37 @@ func create(id string) *Client {
 	v := CreateView(&Node{ID: id, Addr: ""}, 0)
 	c := &Client{
 		Hyparview: *v,
-		in:        make([]Message),
-		out:       make([]Message),
+		in:        make([]Message, 0),
+		out:       make([]Message, 0),
 	}
 	return c
 }
 
-func (w *World) join(self string, contact string) {
-	ms := w.get(contact).RecvJoin(&JoinRequest{
-		to:   contact,
-		From: self,
-	})
-	w.send(ms)
-}
+// func (w *World) join(self string, contact string) {
+// 	ms := w.get(contact).RecvJoin(&JoinRequest{
+// 		to:   contact,
+// 		From: self,
+// 	})
+// 	w.send(ms)
+// }
 
 func doFail(percentage int) bool {
 	return rint(100) < percentage
 }
 
-func (w *World) stepActive() {
-	v := w.nextShuffled()
-	for _, m := range v.out {
+// func (w *World) stepActive() {
+// 	v := w.nextShuffled()
+// 	for _, m := range v.out {
 
-	}
-}
+// 	}
+// }
 
 func (w *World) get(id string) *Client {
 	return w.nodes[id]
+}
+
+func (w *World) sendOne(m Message) {
+	w.queue = append(w.queue, m)
 }
 
 func (w *World) send(ms []Message) {
@@ -125,7 +132,7 @@ func (w *World) drain(depth int) {
 	}
 
 	m := w.queue[0]
-	v := w.get(m.To())
+	v := w.get(m.To().ID)
 	if v == nil {
 		return
 	}
@@ -145,7 +152,7 @@ func (w *World) failActive(n *Node) {
 		if v.Active.IsEmpty() {
 			// simulate sync network call
 			// TODO simulate failure
-			w.send(SendNeighbor(n, v.Self, HighPriority))
+			w.sendOne(SendNeighbor(n, v.Self, HighPriority))
 			break
 		} else {
 			m := SendNeighbor(n, v.Self, LowPriority)
@@ -167,21 +174,39 @@ func (w *World) isConnected() bool {
 		lost[k] = v
 	}
 
-	var lp func(string)
-	lp := func(id string) {
-		if _, ok := lost[id]; !ok {
+	var lp func(*Node)
+	lp = func(n *Node) {
+		if _, ok := lost[n.ID]; !ok {
 			return
 		}
 
-		delete(lost, n)
-		for _, n := range w.get(n).Active.Shuffled() {
-			lp(n.ID)
+		delete(lost, n.ID)
+		for _, m := range w.get(n.ID).Active.Shuffled() {
+			lp(m)
 		}
 	}
-	lp("n0")
 
-	fmt.Print("%d connected, %d lost", len(w.nodes)-len(lost), len(lost))
+	// I hate that this is lp(first(nodes))
+	var start *Node
+	for _, v := range w.nodes {
+		start = v.Self
+		break
+	}
+	lp(start)
+
+	fmt.Printf("%d connected, %d lost\n", len(w.nodes)-len(lost), len(lost))
 	return len(lost) == 0
+}
+
+func (w *World) nodeKeys() []string {
+	m := w.nodes
+	ks := make([]string, len(m))
+	i := 0
+	for k, _ := range m {
+		ks[i] = k
+		i++
+	}
+	return ks
 }
 
 func shuffle(ks []string) {
@@ -191,7 +216,8 @@ func shuffle(ks []string) {
 	}
 }
 
-func (m map[string]interface{}) keys() {
+// For the love...
+func keys(m map[string]interface{}) []string {
 	ks := make([]string, len(m))
 	i := 0
 	for k, _ := range m {
