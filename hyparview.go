@@ -1,5 +1,7 @@
 package hyparview
 
+// import "fmt"
+
 type ConfigRandomWalkLength struct {
 	Active  int
 	Passive int
@@ -7,8 +9,6 @@ type ConfigRandomWalkLength struct {
 }
 
 type Config struct {
-	ActiveSize     int
-	PassiveSize    int
 	ShuffleActive  int
 	ShufflePassive int
 	RWL            ConfigRandomWalkLength
@@ -30,8 +30,6 @@ func CreateView(self *Node, n int) *Hyparview {
 
 	return &Hyparview{
 		Config: Config{
-			ActiveSize:     active,
-			PassiveSize:    passive,
 			ShuffleActive:  3,
 			ShufflePassive: 4,
 			RWL: ConfigRandomWalkLength{
@@ -68,8 +66,8 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 	ttl := r.TTL
 
 	if ttl == 0 || v.Active.IsEmpty() {
-		ms = append(ms, v.AddActive(node)...)
-		// stop on active empty because who else am I going to send it to
+		v.AddActive(node) // Don't bother to catch disconnect, there won't be any
+		// Stop on active empty because who else am I going to send it to
 		return ms
 	}
 
@@ -95,7 +93,6 @@ func (v *Hyparview) DropRandActive() (ms []Message) {
 	i := rint(v.Active.Size() - 1)
 	node := v.Active.GetIndex(i)
 	v.Active.DelIndex(i)
-	v.Active.Add(node)
 	ms = append(ms, SendDisconnect(node, v.Self))
 	return ms
 }
@@ -103,8 +100,7 @@ func (v *Hyparview) DropRandActive() (ms []Message) {
 // AddActive adds a node to the active view, possibly dropping an active peer to make room.
 // Paper
 func (v *Hyparview) AddActive(node *Node) (ms []Message) {
-	if node.Equal(v.Self) ||
-		v.Active.Contains(node) {
+	if node.Equal(v.Self) {
 		return ms
 	}
 
@@ -233,12 +229,20 @@ func (v *Hyparview) addShuffle(n *Node, sent []*Node) {
 }
 
 // Recv is a helper method that dispatches to the correct recv
-func (v *Hyparview) Recv(m Message) []Message {
+func (v *Hyparview) Recv(m Message) (ms []Message) {
 	switch m1 := m.(type) {
 	case *JoinRequest:
-		return v.RecvJoin(m1)
+		ms = v.RecvJoin(m1)
+		// if len(ms) > v.Active.Max {
+		// 	fmt.Printf("JOIN %d\n", len(ms))
+		// }
+		return ms
 	case *ForwardJoinRequest:
-		return v.RecvForwardJoin(m1)
+		ms = v.RecvForwardJoin(m1)
+		// if len(ms) > 1 {
+		// 	fmt.Printf("FORWARD %d\n", len(ms))
+		// }
+		return ms
 	case *DisconnectRequest:
 		v.RecvDisconnect(m1)
 	case *NeighborRequest:
@@ -248,5 +252,5 @@ func (v *Hyparview) Recv(m Message) []Message {
 	default:
 		// log unimplemented?
 	}
-	return []Message{}
+	return ms
 }
