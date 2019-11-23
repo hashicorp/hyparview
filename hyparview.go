@@ -52,14 +52,12 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 		ms = append(ms, v.DropRandActive()...)
 	}
 
-	v.Active.Add(r.From)
-
+	// Forward to all active peers
 	for _, n := range v.Active.Nodes {
-		if n.Equal(r.From) {
-			continue
-		}
 		ms = append(ms, SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
 	}
+
+	v.Active.Add(r.From)
 	return ms
 }
 
