@@ -135,6 +135,14 @@ func (v *Hyparview) AddPassive(node *Node) {
 	v.Passive.Add(node)
 }
 
+// DelPassive is a helper function to delete the node from the passive view
+func (v *Hyparview) DelPassive(node *Node) {
+	i := v.Passive.ContainsIndex(node)
+	if i > 0 {
+		v.Passive.DelIndex(i)
+	}
+}
+
 // RecvDisconnect processes a disconnect, demoting the sender to the passive view
 func (v *Hyparview) RecvDisconnect(r *DisconnectRequest) {
 	node := r.From
