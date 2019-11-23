@@ -1,16 +1,24 @@
 package hyparview
 
+import (
+	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
 type ConfigFailureRate struct {
-	active  float32
-	shuffle float32
-	reply   float23
+	active  int
+	shuffle int
+	reply   int
 }
 
 type Config struct {
-	rounds    int
-	peers     int
-	mortality float32
-	fail      ConfigFailureRate
+	rounds     int
+	peers      int
+	mortality  int
+	drainDepth int
+	fail       ConfigFailureRate
 }
 
 type Client struct {
@@ -20,20 +28,43 @@ type Client struct {
 }
 
 type World struct {
-	Config
-	nodes    map[string]*Client
-	shuffled []string
-	morgue   map[string]int
+	nodes  map[string]*Client
+	morgue map[string]int
+	queue  []Message
 }
 
-func simulation(c Config) {
+func simulation(c Config) *World {
+	w := &World{
+		nodes: make(map[string]*Client, c.peers),
+		morge: make(map[string]*Client),
+		queue: make([]Message),
+	}
 
+	// make all the nodes
+	for i := 1; i <= c.peers; i++ {
+		w.node[i] = create(fmt.Sprintf("peer%06d", i))
+	}
+
+	for i := 1; i <= c.rounds; i++ {
+		ns := w.node.keys()
+		shuffle(ns)
+		root := w.get(ns[0])
+		ns = ns[1:]
+
+		for _, id := range ns {
+			me := w.get(id)
+			w.send(root.Recv(SendJoin(root.self, me.self)))
+			w.drain(c.drainDepth)
+		}
+
+		w.drainAll()
+	}
 }
 
-func TestSimulation(t) {
-	net := simulation(Config{
+func TestSimulation(t *testing.T) {
+	w := simulation(Config{
 		rounds:    50,
-		peers:     10000,
+		peers:     100,
 		mortality: 30,
 		fail: ConfigFailureRate{
 			active:  30,
@@ -41,6 +72,7 @@ func TestSimulation(t) {
 			reply:   30,
 		},
 	})
+	require.True(t, w.isConnected())
 }
 
 func create(id string) *Client {
@@ -72,32 +104,84 @@ func (w *World) stepActive() {
 	}
 }
 
-func (c *Client) failActive(failed *Node) {
-	var node *Node
-	for _, n := range c.v.Passive.Shuffled() {
+func (w *World) get(id string) *Client {
+	return w.nodes[id]
+}
+
+func (w *World) send(ms []Message) {
+	w.queue = append(w.queue, ms...)
+	// qs, ok := w.queue[m.To()]
+	// if !ok {
+	// 	qs = make([]Message)
+	// 	w.queue[m.To()] = qs
+	// }
+	// copy(qs, ms)
+}
+
+// drain the queue, appending resulting messages back onto the queue
+func (w *World) drain(depth int) {
+	if len(w.queue) == 0 || depth == 0 {
+		return
+	}
+
+	m := w.queue[0]
+	v := w.get(m.To())
+	if v == nil {
+		return
+	}
+
+	ms := v.Recv(m)
+	w.send(ms)
+	w.drain(depth - 1)
+}
+
+func (w *World) drainAll() {
+	w.drain(-1)
+}
+
+func (w *World) failActive(n *Node) {
+	v := w.get(n.ID)
+	for _, n := range v.Passive.Shuffled() {
 		if v.Active.IsEmpty() {
 			// simulate sync network call
 			// TODO simulate failure
-			m := SendNeighbor(n, c.v.Self, HighPriority)
-			ms := n.v.RecvNeighbor(m)
-			// forward maybe disconnect messages
-			c.out = append(c.out, ms)
+			w.send(SendNeighbor(n, v.Self, HighPriority))
 			break
 		} else {
-			m := SendNeighbor(n, c.v.Self, LowPriority)
-			ms := n.v.RecvNeighbor(m)
+			m := SendNeighbor(n, v.Self, LowPriority)
+			ms := w.get(n.ID).RecvNeighbor(m)
 			// any low priority response is failure
 			if len(ms) == 0 {
-				c.v.DelPassive(n)
-				c.v.AddActive(n)
+				v.DelPassive(n)
+				w.send(v.AddActive(n))
 				break
 			}
+			v.DelPassive(n)
 		}
 	}
 }
 
-func (w *World) get(id string) *Client {
-	return w.nodes[id]
+func (w *World) isConnected() bool {
+	lost := make(map[string]*Client, len(w.nodes))
+	for k, v := range w.nodes {
+		lost[k] = v
+	}
+
+	var lp func(string)
+	lp := func(id string) {
+		if _, ok := lost[id]; !ok {
+			return
+		}
+
+		delete(lost, n)
+		for _, n := range w.get(n).Active.Shuffled() {
+			lp(n.ID)
+		}
+	}
+	lp("n0")
+
+	fmt.Print("%d connected, %d lost", len(w.nodes)-len(lost), len(lost))
+	return len(lost) == 0
 }
 
 func shuffle(ks []string) {
@@ -107,41 +191,12 @@ func shuffle(ks []string) {
 	}
 }
 
-func keys(m map[string]*Client) []string{
+func (m map[string]interface{}) keys() {
 	ks := make([]string, len(m))
-	i := 0 
-	for k, _ :range map {
+	i := 0
+	for k, _ := range m {
 		ks[i] = k
 		i++
 	}
 	return ks
-}
-
-func (w *World) shuffled() []string {
-	ks := keys(w.nodes)
-	shuffle(ks)
-	return ks
-}
-
-func (w *World) send(ms []Message) {
-	qs, ok := w.queue[m.To()]
-	if !ok {
-		qs = make([]Message)
-		w.queue[m.To()] = qs
-	}
-	copy(qs, ms)
-}
-
-func (w *World) drain() {
-	s
-}
-
-// DONT
-func (w *World) nextShuffled() *Client {
-	if len(w.shuffle) == 0 {
-		w.shuffle = shuffled()
-	}
-	c := w.nodes[w.shuffle[0]]
-	w.shuffle = w.shuffle[1:]
-	return c
 }
