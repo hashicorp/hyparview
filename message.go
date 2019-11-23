@@ -16,8 +16,8 @@ type JoinRequest struct {
 
 func (r *JoinRequest) To() *Node { return r.to }
 
-func SendJoin(to *Node, from *Node) JoinRequest {
-	return JoinRequest{
+func SendJoin(to *Node, from *Node) *JoinRequest {
+	return &JoinRequest{
 		to:   to,
 		From: from,
 	}
