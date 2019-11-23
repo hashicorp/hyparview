@@ -32,8 +32,7 @@ func (v *ViewPart) Add(n *Node) {
 
 func (v *ViewPart) DelIndex(i int) {
 	ns := v.Nodes
-	mx := len(ns) - 1
-	v.Nodes = append(ns[0:i], ns[i+1:mx]...)
+	v.Nodes = append(ns[:i], ns[i+1:]...)
 }
 
 func (v *ViewPart) GetIndex(i int) *Node {

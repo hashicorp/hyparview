@@ -94,7 +94,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 // DropRandActive removes a random active peer and returns the disconnect message following
 // the paper
 func (v *Hyparview) DropRandActive() (ms []Message) {
-	i := rint(v.Active.Size())
+	i := rint(v.Active.Size() - 1)
 	node := v.Active.GetIndex(i)
 	v.Active.DelIndex(i)
 	v.Active.Add(node)
@@ -128,7 +128,7 @@ func (v *Hyparview) AddPassive(node *Node) {
 	}
 
 	if v.Passive.IsFull() {
-		i := rint(v.Passive.Size())
+		i := rint(v.Passive.Size() - 1)
 		v.Passive.DelIndex(i)
 	}
 
