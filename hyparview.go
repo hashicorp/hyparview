@@ -229,17 +229,18 @@ func (v *Hyparview) addShuffle(n *Node, sent []*Node) {
 // Recv is a helper method that dispatches to the correct recv
 func (v *Hyparview) Recv(m Message) []Message {
 	switch m1 := m.(type) {
-	case JoinRequest:
-		return v.RecvJoin(&m1)
-	case ForwardJoinRequest:
-		return v.RecvForwardJoin(&m1)
-	case DisconnectRequest:
-		return v.RecvDisconnect(&m1)
-	case NeighborRequest:
-		return v.RecvNeighbor(&m1)
-	case ShuffleRequest:
-		return v.RecvShuffle(&m1)
+	case *JoinRequest:
+		return v.RecvJoin(m1)
+	case *ForwardJoinRequest:
+		return v.RecvForwardJoin(m1)
+	case *DisconnectRequest:
+		v.RecvDisconnect(m1)
+	case *NeighborRequest:
+		return v.RecvNeighbor(m1)
+	case *ShuffleRequest:
+		return v.RecvShuffle(m1)
 	default:
 		// log unimplemented?
 	}
+	return []Message{}
 }
