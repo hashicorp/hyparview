@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kr/pretty"
 	"github.com/stretchr/testify/assert"
 )
 
 // TestSimulation is the only test entry point. Configure and assert everything here
 func TestSimulation(t *testing.T) {
 	w := simulation(WorldConfig{
-		rounds:     50,
+		rounds:     5,
 		peers:      1000,
 		mortality:  30,
-		drainDepth: 400,
+		drainDepth: 30,
 		fail: WorldFailureRate{
 			active:  30,
 			shuffle: 30,
@@ -24,13 +23,30 @@ func TestSimulation(t *testing.T) {
 	assert.True(t, w.isConnected())
 	assert.Equal(t, 0, len(w.queue))
 
-	pretty.Log("TOTAL", w.totalMessages)
-
-	end := 20
-	if end > len(w.queue) {
-		end = len(w.queue)
+	fwd, ttl, disc, misc, shuf, shufr := 0, 0, 0, 0, 0, 0
+	for _, m := range w.queue {
+		switch r := m.(type) {
+		case *ForwardJoinRequest:
+			fwd++
+		case *DisconnectRequest:
+			disc++
+		case *ShuffleRequest:
+			shuf++
+			ttl += r.TTL
+		case *ShuffleReply:
+			shufr++
+		default:
+			misc++
+		}
 	}
-	pretty.Log("QUEUE", len(w.queue), w.queue[:end])
+
+	avg := 0
+	if shuf > 0 {
+		avg = ttl / shuf
+	}
+
+	fmt.Printf("FWD %d DISC %d MISC %d SHUF %d (TTL %d) SHUFR %d\n",
+		fwd, disc, misc, shuf, avg, shufr)
 }
 
 type WorldFailureRate struct {
@@ -67,13 +83,14 @@ func simulation(c WorldConfig) *World {
 		queue: make([]Message, 0),
 	}
 
-	// make all the nodes
-	for i := 1; i <= c.peers; i++ {
+	// Make all the nodes
+	for i := 0; i < c.peers; i++ {
 		id := fmt.Sprintf("n%d", i)
 		w.nodes[id] = create(id)
 	}
 
-	for i := 1; i <= c.rounds; i++ {
+	// Connect all the nodes
+	for i := 0; i < c.peers; i++ {
 		ns := w.nodeKeys()
 		shuffle(ns)
 		root := w.get(ns[0])
@@ -84,8 +101,18 @@ func simulation(c WorldConfig) *World {
 			w.send(root.Recv(SendJoin(root.Self, me.Self)))
 			w.drain(c.drainDepth)
 		}
+	}
 
-		// w.drainAll()
+	// Shuffle a few times
+	for i := 0; i < c.rounds; i++ {
+		ns := w.nodeKeys()
+		shuffle(ns)
+		for i := 1; i < len(ns); i++ {
+			me := w.get(ns[i-1])
+			thee := w.get(ns[i])
+			w.send(me.SendShuffle(thee.Self))
+			w.drain(9)
+		}
 	}
 
 	return w
