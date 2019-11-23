@@ -4,8 +4,34 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/kr/pretty"
+	"github.com/stretchr/testify/assert"
 )
+
+// TestSimulation is the only test entry point. Configure and assert everything here
+func TestSimulation(t *testing.T) {
+	w := simulation(WorldConfig{
+		rounds:     50,
+		peers:      1000,
+		mortality:  30,
+		drainDepth: 400,
+		fail: WorldFailureRate{
+			active:  30,
+			shuffle: 30,
+			reply:   30,
+		},
+	})
+	assert.True(t, w.isConnected())
+	assert.Equal(t, 0, len(w.queue))
+
+	pretty.Log("TOTAL", w.totalMessages)
+
+	end := 20
+	if end > len(w.queue) {
+		end = len(w.queue)
+	}
+	pretty.Log("QUEUE", len(w.queue), w.queue[:end])
+}
 
 type WorldFailureRate struct {
 	active  int
@@ -30,7 +56,8 @@ type Client struct {
 type World struct {
 	nodes map[string]*Client
 	// morgue map[string]*Client
-	queue []Message
+	queue         []Message
+	totalMessages int
 }
 
 func simulation(c WorldConfig) *World {
@@ -58,24 +85,10 @@ func simulation(c WorldConfig) *World {
 			w.drain(c.drainDepth)
 		}
 
-		w.drainAll()
+		// w.drainAll()
 	}
 
 	return w
-}
-
-func TestSimulation(t *testing.T) {
-	w := simulation(WorldConfig{
-		rounds:    50,
-		peers:     100,
-		mortality: 30,
-		fail: WorldFailureRate{
-			active:  30,
-			shuffle: 30,
-			reply:   30,
-		},
-	})
-	require.True(t, w.isConnected())
 }
 
 func create(id string) *Client {
@@ -96,35 +109,41 @@ func (w *World) get(id string) *Client {
 	return w.nodes[id]
 }
 
-func (w *World) sendOne(m Message) {
-	w.queue = append(w.queue, m)
+func (w *World) send(ms []Message) {
+	w.totalMessages += len(ms)
+	w.queue = append(w.queue, ms...)
 }
 
-func (w *World) send(ms []Message) {
-	w.queue = append(w.queue, ms...)
+func (w *World) sendOne(m Message) {
+	w.send([]Message{m})
 }
 
 // drain the queue, appending resulting messages back onto the queue
 func (w *World) drain(depth int) {
-	if len(w.queue) == 0 || depth == 0 {
-		return
+	for depth != 0 {
+		if len(w.queue) == 0 {
+			return
+		}
+
+		m := w.queue[0]
+		w.queue = w.queue[1:]
+
+		v := w.get(m.To().ID)
+		if v != nil {
+			ms := v.Recv(m)
+			w.send(ms)
+		}
+
+		depth--
 	}
-
-	m := w.queue[0]
-	w.queue = w.queue[1:]
-
-	v := w.get(m.To().ID)
-	if v == nil {
-		return
-	}
-
-	ms := v.Recv(m)
-	w.send(ms)
-	w.drain(depth - 1)
 }
 
 func (w *World) drainAll() {
-	w.drain(-1)
+	// This should be -1, but it keeps blowing the stack. Suggests I've got a bug where
+	// I never stop sending messages
+
+	// w.drain(-1)
+	w.drain(100)
 }
 
 func (w *World) failActive(n *Node) {
