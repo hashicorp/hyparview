@@ -111,6 +111,8 @@ func (w *World) drain(depth int) {
 	}
 
 	m := w.queue[0]
+	w.queue = w.queue[1:]
+
 	v := w.get(m.To().ID)
 	if v == nil {
 		return
