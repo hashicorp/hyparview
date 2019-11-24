@@ -2,6 +2,7 @@ package hyparview
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -47,6 +48,8 @@ func TestSimulation(t *testing.T) {
 
 	fmt.Printf("FWD %d DISC %d MISC %d SHUF %d (TTL %d) SHUFR %d\n",
 		fwd, disc, misc, shuf, avg, shufr)
+
+	w.PlotInDegree()
 }
 
 type WorldFailureRate struct {
@@ -223,6 +226,38 @@ func (w *World) isConnected() bool {
 
 	fmt.Printf("%d connected, %d lost\n", len(w.nodes)-len(lost), len(lost))
 	return len(lost) == 0
+}
+
+func (w *World) PlotInDegree() {
+	plot := func(ns func(*Hyparview) []*Node, path string) {
+		act := map[string]int{}
+		for _, v := range w.nodes {
+			for _, n := range ns(&v.Hyparview) {
+				act[n.ID] += 1
+			}
+		}
+
+		max := 0
+		for _, c := range act {
+			if c > max {
+				max = c
+			}
+		}
+
+		deg := make([]int, max+1)
+		for _, c := range act {
+			deg[c] += 1
+		}
+
+		f, _ := os.Create(path)
+		defer f.Close()
+		for i, c := range deg {
+			f.WriteString(fmt.Sprintf("%d %d\n", i, c))
+		}
+	}
+
+	plot(func(v *Hyparview) []*Node { return v.Active.Nodes }, "active.data")
+	plot(func(v *Hyparview) []*Node { return v.Passive.Nodes }, "passive.data")
 }
 
 func (w *World) nodeKeys() []string {

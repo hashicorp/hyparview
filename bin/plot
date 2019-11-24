@@ -1,0 +1,8 @@
+#!/usr/bin/env gnuplot
+# set title "In Degree"
+set xlabel "In Degree"
+set ylabel "Peers"
+set ytics "10"
+set term png tiny
+plot "active.data" title "active" with lines
+# plot "passive.data" title "passive" with lines
