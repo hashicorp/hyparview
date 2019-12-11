@@ -63,13 +63,17 @@ type WorldConfig struct {
 	peers      int
 	mortality  int
 	drainDepth int
+	payloads   int
 	fail       WorldFailureRate
 }
 
 type Client struct {
 	Hyparview
-	in  []Message
-	out []Message
+	app      int
+	appSeen  int
+	appWaste int
+	in       []Message
+	out      []Message
 }
 
 type World struct {
@@ -77,6 +81,7 @@ type World struct {
 	// morgue map[string]*Client
 	queue         []Message
 	totalMessages int
+	totalPayloads int
 }
 
 func simulation(c WorldConfig) *World {
@@ -115,6 +120,18 @@ func simulation(c WorldConfig) *World {
 			thee := w.get(ns[i])
 			w.send(me.SendShuffle(thee.Self))
 			w.drain(9)
+		}
+	}
+
+	// Send some messages
+	for i := 0; i < c.payloads; i++ {
+		for _, node := range w.randNodes() {
+			peer := node.Peer()
+			if peer == nil {
+				w.failActive(node)
+				w.drain(100)
+			}
+			w.gossip(node, peer, i)
 		}
 	}
 
@@ -269,6 +286,13 @@ func (w *World) nodeKeys() []string {
 		i++
 	}
 	return ks
+}
+
+func (w *World) randNodes() (ns []*Client) {
+	for _, k := range w.nodeKeys() {
+		ns = append(ns, w.get(k))
+	}
+	return ns
 }
 
 func shuffle(ks []string) {
