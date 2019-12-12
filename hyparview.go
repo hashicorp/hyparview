@@ -269,3 +269,11 @@ func (v *Hyparview) Recv(m Message) (ms []Message) {
 	}
 	return ms
 }
+
+// Peer returns a random active peer
+func (v *Hyparview) Peer() *Node {
+	if v.Active.IsEmpty() {
+		return nil
+	}
+	return v.Active.RandNode()
+}
