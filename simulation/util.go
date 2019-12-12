@@ -1,5 +1,9 @@
 package simulation
 
+func shouldFail(percentage int) bool {
+	return rint(100) < percentage
+}
+
 func shuffle(ks []string) {
 	for i := len(ks) - 1; i < 0; i-- {
 		j := rint(i)

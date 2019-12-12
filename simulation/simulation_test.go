@@ -16,9 +16,11 @@ func TestSimulation(t *testing.T) {
 		mortality:  30,
 		drainDepth: 30,
 		fail: WorldFailureRate{
-			active:  30,
-			shuffle: 30,
-			reply:   30,
+			active:      30,
+			shuffle:     30,
+			reply:       30,
+			gossip:      5,
+			gossipReply: 5,
 		},
 	})
 	assert.True(t, w.isConnected())
@@ -60,9 +62,10 @@ func simulation(c WorldConfig) *World {
 	}
 
 	// Make all the nodes
+	cc := ClientConfig{MaxHot: 4, fail: c.fail}
 	for i := 0; i < c.peers; i++ {
 		id := fmt.Sprintf("n%d", i)
-		w.nodes[id] = create(id)
+		w.nodes[id] = create(id, cc)
 	}
 
 	// Connect all the nodes
@@ -95,19 +98,15 @@ func simulation(c WorldConfig) *World {
 	ns := w.randNodes()
 	for i := 0; i < c.payloads; i++ {
 		node := ns[i] // client connects to a random node
-		peer := node.Peer()
-		if peer == nil {
-			w.failActive(node)
-			w.drain(100)
-		}
-		node.gossip(peer, i)
+		// peer := node.Peer()
+		// if peer == nil {
+		// 	w.failActive(node)
+		// 	w.drain(100)
+		// }
+		node.syncGossip(i)
 	}
 
 	return w
-}
-
-func doFail(percentage int) bool {
-	return rint(100) < percentage
 }
 
 func (w *World) failActive(n *Node) {

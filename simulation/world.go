@@ -9,9 +9,11 @@ type World struct {
 }
 
 type WorldFailureRate struct {
-	active  int
-	shuffle int
-	reply   int
+	active      int
+	shuffle     int
+	reply       int
+	gossip      int
+	gossipReply int
 }
 
 type WorldConfig struct {
