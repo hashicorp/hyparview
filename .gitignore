@@ -1,2 +1,3 @@
-*.png
-*.data
+.build-*
+data/*
+plot/*

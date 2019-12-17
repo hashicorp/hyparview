@@ -58,6 +58,6 @@ func (w *World) PlotInDegree() {
 		}
 	}
 
-	plot(func(v *Hyparview) []*Node { return v.Active.Nodes }, "active.data")
-	plot(func(v *Hyparview) []*Node { return v.Passive.Nodes }, "passive.data")
+	plot(func(v *Hyparview) []*Node { return v.Active.Nodes }, "../data/active")
+	plot(func(v *Hyparview) []*Node { return v.Passive.Nodes }, "../data/passive")
 }
