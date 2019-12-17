@@ -45,14 +45,14 @@ func (v *ViewPart) Shuffled() []*Node {
 	// Start with a copy, fischer-yates needs to operate destructively
 	copy(ns, v.Nodes)
 	for i := l - 1; i > 0; i-- {
-		j := rint(i)
+		j := Rint(i)
 		ns[i], ns[j] = ns[j], ns[i]
 	}
 	return ns
 }
 
 func (v *ViewPart) RandIndex() int {
-	return rint(len(v.Nodes) - 1)
+	return Rint(len(v.Nodes) - 1)
 }
 
 func (v *ViewPart) RandNode() *Node {

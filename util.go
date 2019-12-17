@@ -16,6 +16,6 @@ func rintCrypto(n int) int {
 
 // rint is a placeholder so we can swap out for rintCrypto in testing
 // rand [0, n] inclusive
-func rint(n int) int {
+func Rint(n int) int {
 	return rand.Intn(n + 1)
 }
