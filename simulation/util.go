@@ -1,12 +1,14 @@
 package simulation
 
+import h "github.com/hashicorp/hyparview"
+
 func shouldFail(percentage int) bool {
-	return rint(100) < percentage
+	return h.Rint(100) < percentage
 }
 
 func shuffle(ks []string) {
 	for i := len(ks) - 1; i < 0; i-- {
-		j := rint(i)
+		j := h.Rint(i)
 		ks[i], ks[j] = ks[j], ks[i]
 	}
 }

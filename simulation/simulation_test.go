@@ -2,9 +2,9 @@ package simulation
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
+	h "github.com/hashicorp/hyparview"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,6 +15,8 @@ func TestSimulation(t *testing.T) {
 		peers:      1000,
 		mortality:  30,
 		drainDepth: 30,
+		payloads:   30,
+		gossipHeat: 4,
 		fail: WorldFailureRate{
 			active:      30,
 			shuffle:     30,
@@ -29,14 +31,14 @@ func TestSimulation(t *testing.T) {
 	fwd, ttl, disc, misc, shuf, shufr := 0, 0, 0, 0, 0, 0
 	for _, m := range w.queue {
 		switch r := m.(type) {
-		case *ForwardJoinRequest:
+		case *h.ForwardJoinRequest:
 			fwd++
-		case *DisconnectRequest:
+		case *h.DisconnectRequest:
 			disc++
-		case *ShuffleRequest:
+		case *h.ShuffleRequest:
 			shuf++
 			ttl += r.TTL
-		case *ShuffleReply:
+		case *h.ShuffleReply:
 			shufr++
 		default:
 			misc++
@@ -56,16 +58,16 @@ func TestSimulation(t *testing.T) {
 
 func simulation(c WorldConfig) *World {
 	w := &World{
-		nodes: make(map[string]*Client, c.peers),
+		config: &c,
+		nodes:  make(map[string]*Client, c.peers),
 		// morgue: make(map[string]*Client),
-		queue: make([]Message, 0),
+		queue: make([]h.Message, 0),
 	}
 
 	// Make all the nodes
-	cc := ClientConfig{MaxHot: 4, fail: c.fail}
 	for i := 0; i < c.peers; i++ {
 		id := fmt.Sprintf("n%d", i)
-		w.nodes[id] = create(id, cc)
+		w.nodes[id] = makeClient(w, id)
 	}
 
 	// Connect all the nodes
@@ -77,7 +79,7 @@ func simulation(c WorldConfig) *World {
 
 		for _, id := range ns {
 			me := w.get(id)
-			w.send(root.Recv(SendJoin(root.Self, me.Self)))
+			w.send(root.Recv(h.SendJoin(root.Self, me.Self)))
 			w.drain(c.drainDepth)
 		}
 	}
@@ -107,26 +109,4 @@ func simulation(c WorldConfig) *World {
 	}
 
 	return w
-}
-
-func (w *World) failActive(n *Node) {
-	v := w.get(n.ID)
-	for _, n := range v.Passive.Shuffled() {
-		if v.Active.IsEmpty() {
-			// simulate sync network call
-			// TODO simulate failure
-			w.sendOne(SendNeighbor(n, v.Self, HighPriority))
-			break
-		} else {
-			m := SendNeighbor(n, v.Self, LowPriority)
-			ms := w.get(n.ID).RecvNeighbor(m)
-			// any low priority response is failure
-			if len(ms) == 0 {
-				v.DelPassive(n)
-				w.send(v.AddActive(n))
-				break
-			}
-			v.DelPassive(n)
-		}
-	}
 }

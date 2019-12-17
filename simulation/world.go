@@ -1,9 +1,12 @@
 package simulation
 
+import h "github.com/hashicorp/hyparview"
+
 type World struct {
-	nodes map[string]*Client
+	config *WorldConfig
+	nodes  map[string]*Client
 	// morgue map[string]*Client
-	queue         []Message
+	queue         []h.Message
 	totalMessages int
 	totalPayloads int
 }
@@ -22,6 +25,7 @@ type WorldConfig struct {
 	mortality  int
 	drainDepth int
 	payloads   int
+	gossipHeat int
 	fail       WorldFailureRate
 }
 
@@ -47,13 +51,13 @@ func (w *World) randNodes() (ns []*Client) {
 	return ns
 }
 
-func (w *World) send(ms []Message) {
+func (w *World) send(ms []h.Message) {
 	w.totalMessages += len(ms)
 	w.queue = append(w.queue, ms...)
 }
 
-func (w *World) sendOne(m Message) {
-	w.send([]Message{m})
+func (w *World) sendOne(m h.Message) {
+	w.send([]h.Message{m})
 }
 
 // drain the queue, appending resulting messages back onto the queue

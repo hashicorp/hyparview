@@ -1,49 +1,45 @@
 package simulation
 
-import "github.com/hashicorp/hyparview"
-
-type ClientConfig struct {
-	MaxHot int
-	fail   WorldFailureRate
-}
+import h "github.com/hashicorp/hyparview"
 
 type Client struct {
-	Hyparview
-	clientConfig
+	h.Hyparview
+	world    *World
 	app      int // final value we got
 	appHot   int // gossip hotness
 	appSeen  int // if app == appSeen, we got every message
 	appWaste int // count of app messages that didn't change the value
-	in       []Message
-	out      []Message
+	in       []h.Message
+	out      []h.Message
 }
 
-func create(id string, cfg clientConfig) *Client {
-	v := CreateView(&Node{ID: id, Addr: ""}, 0)
+func makeClient(w *World, id string) *Client {
+	v := h.CreateView(&h.Node{ID: id, Addr: ""}, 0)
 	c := &Client{
-		Hyparview:    *v,
-		clientConfig: cfg,
-		in:           make([]Message, 0),
-		out:          make([]Message, 0),
+		Hyparview: *v,
+		world:     w,
+		in:        make([]h.Message, 0),
+		out:       make([]h.Message, 0),
 	}
 	return c
 }
 
-func (c *Client) failActive(peer *Client) (ns []*Message) {
+func (c *Client) failActive(peer *Client) (ns []h.Message) {
 	for _, n := range c.Passive.Shuffled() {
 		if c.Active.IsEmpty() {
 			// High priority can't be rejected, so send async
-			m := hyparview.SendNeighbor(n, c.Self, HighPriority)
+			m := h.SendNeighbor(n, c.Self, h.HighPriority)
 			ns = append(ns, m)
 			break
 		} else {
-			m := hyparview.SendNeighbor(n, c.Self, LowPriority)
+			m := h.SendNeighbor(n, c.Self, h.LowPriority)
 			// simulate sync network call
-			ms := n.RecvNeighbor(m)
+			peer := c.world.get(n.ID)
+			ms := peer.RecvNeighbor(m)
 			// any low priority response is failure
 			if len(ms) == 0 {
 				c.DelPassive(n)
-				ns = append(ns, c.AddActive(n))
+				ns = append(ns, c.AddActive(n)...)
 				break
 			}
 			c.DelPassive(n)
@@ -54,32 +50,34 @@ func (c *Client) failActive(peer *Client) (ns []*Message) {
 
 // Example gossip implementation. For deterministic testing, each payload runs until the
 // message is completely distributed.
-func (c *Client) syncGossip(payload int) (ms []*Message) {
+func (c *Client) syncGossip(payload int) (ms []*h.Message) {
 	if c.app >= payload {
 		return
 	}
 	c.app = payload
-	c.appHot = c.MaxHot
+	c.appHot = c.world.config.gossipHeat
 	for c.appHot > 0 {
-		if hyparview.rint(c.MaxHot) > c.appHot {
+		if h.Rint(c.world.config.gossipHeat) > c.appHot {
 			continue
 		}
-		if shouldFail(c.fail.gossip) {
+		if shouldFail(c.world.config.fail.gossip) {
 			continue
 		}
 
-		peer := c.Peer()
-		if shouldFail(c.fail.active) {
-
+		peer := c.world.get(c.Peer().ID)
+		if shouldFail(c.world.config.fail.active) {
+			c.failActive(peer)
+			continue
 		}
 
-		if !peer.recv(payload) || shouldFail(c.fail.gossipReply) {
+		if !peer.recvGossip(payload) || shouldFail(c.world.config.fail.gossipReply) {
 			c.appHot -= 1
 		}
 	}
+	return ms
 }
 
-func (c *Client) recv(payload int) bool {
+func (c *Client) recvGossip(payload int) bool {
 	if payload < c.app {
 		c.appWaste += 1
 		return false

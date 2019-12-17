@@ -1,13 +1,20 @@
 package simulation
 
+import (
+	"fmt"
+	"os"
+
+	h "github.com/hashicorp/hyparview"
+)
+
 func (w *World) isConnected() bool {
 	lost := make(map[string]*Client, len(w.nodes))
 	for k, v := range w.nodes {
 		lost[k] = v
 	}
 
-	var lp func(*Node)
-	lp = func(n *Node) {
+	var lp func(*h.Node)
+	lp = func(n *h.Node) {
 		if _, ok := lost[n.ID]; !ok {
 			return
 		}
@@ -19,7 +26,7 @@ func (w *World) isConnected() bool {
 	}
 
 	// I hate that this is lp(first(nodes))
-	var start *Node
+	var start *h.Node
 	for _, v := range w.nodes {
 		start = v.Self
 		break
@@ -31,7 +38,7 @@ func (w *World) isConnected() bool {
 }
 
 func (w *World) PlotInDegree() {
-	plot := func(ns func(*Hyparview) []*Node, path string) {
+	plot := func(ns func(*h.Hyparview) []*h.Node, path string) {
 		act := map[string]int{}
 		for _, v := range w.nodes {
 			for _, n := range ns(&v.Hyparview) {
@@ -58,6 +65,6 @@ func (w *World) PlotInDegree() {
 		}
 	}
 
-	plot(func(v *Hyparview) []*Node { return v.Active.Nodes }, "../data/active")
-	plot(func(v *Hyparview) []*Node { return v.Passive.Nodes }, "../data/passive")
+	plot(func(v *h.Hyparview) []*h.Node { return v.Active.Nodes }, "../data/active")
+	plot(func(v *h.Hyparview) []*h.Node { return v.Passive.Nodes }, "../data/passive")
 }
