@@ -3,6 +3,7 @@
 - Rogue project (aka push directly to master), total time spent:
   - one plane ride
   - +one+ two beers at local taphouse
+  - two evenings of simulation work
 - Partial membership for gossip clusters
 - 10k node cluster requires 5 active and 30 passive peers in views at
   each node
@@ -19,8 +20,10 @@
 - [X] RecvShuffle
 - [-] Client simulation v0
   - [X] Graph connection test
-  - [ ] Intermittent failures
-  - [ ] Keep the random seed for replay
+  - [X] Intermittent failures
+  - [X] Keep the random seed for replay
+  - [X] Gossip application
+  - [ ] Active view maintenance
 - [ ] Live client example
   - [ ] grpc
   - [ ] TLS
