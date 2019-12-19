@@ -50,7 +50,7 @@ func (c *Client) failActive(peer *Client) (ns []h.Message) {
 
 // Example gossip implementation. For deterministic testing, each payload runs until the
 // message is completely distributed.
-func (c *Client) syncGossip(payload int) (hot bool, ms []*h.Message) {
+func (c *Client) syncGossip(payload int) (hot bool, ms []h.Message) {
 	if c.app >= payload {
 		c.appWaste += 1
 		return false, ms
