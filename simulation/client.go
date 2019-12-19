@@ -50,11 +50,13 @@ func (c *Client) failActive(peer *Client) (ns []h.Message) {
 
 // Example gossip implementation. For deterministic testing, each payload runs until the
 // message is completely distributed.
-func (c *Client) syncGossip(payload int) (ms []*h.Message) {
+func (c *Client) syncGossip(payload int) (hot bool, ms []*h.Message) {
 	if c.app >= payload {
-		return
+		c.appWaste += 1
+		return false, ms
 	}
 	c.app = payload
+	c.appSeen += 1
 	c.appHot = c.world.config.gossipHeat
 	for c.appHot > 0 {
 		if h.Rint(c.world.config.gossipHeat) > c.appHot {
@@ -70,19 +72,11 @@ func (c *Client) syncGossip(payload int) (ms []*h.Message) {
 			continue
 		}
 
-		if !peer.recvGossip(payload) || shouldFail(c.world.config.fail.gossipReply) {
+		hot, ps := peer.syncGossip(payload)
+		ms = append(ms, ps...)
+		if !hot || shouldFail(c.world.config.fail.gossipReply) {
 			c.appHot -= 1
 		}
 	}
-	return ms
-}
-
-func (c *Client) recvGossip(payload int) bool {
-	if payload < c.app {
-		c.appWaste += 1
-		return false
-	}
-	c.app = payload
-	c.appSeen += 1
-	return true
+	return true, ms
 }
