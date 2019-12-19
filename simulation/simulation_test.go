@@ -10,8 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestSimulation is the only test entry point. Configure and assert everything here
+// TestSimulation is the test entry point
 func TestSimulation(t *testing.T) {
+	for i := 0; i < 3; i++ {
+		testSimulation(t, i)
+	}
+}
+
+// testSimulation is the entry point to test a single world
+// World configuration and assertion goes here
+func testSimulation(t *testing.T, i int) {
 	seed := h.Rint64Crypto(math.MaxInt64 - 1)
 	rand.Seed(seed)
 	fmt.Printf("Seed %d\n", seed)
@@ -23,6 +31,7 @@ func TestSimulation(t *testing.T) {
 		drainDepth: 30,
 		payloads:   30,
 		gossipHeat: 4,
+		iteration:  i,
 		fail: WorldFailureRate{
 			active:      30,
 			shuffle:     30,
@@ -88,7 +97,7 @@ func simulation(c WorldConfig) *World {
 		_, ms := node.syncGossip(i)
 		w.send(ms)
 		w.drain(len(ms))
-		w.traceGossipRound()
+		w.traceGossipRound(i)
 	}
 
 	return w
