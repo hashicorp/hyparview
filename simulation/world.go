@@ -3,9 +3,7 @@ package simulation
 import h "github.com/hashicorp/hyparview"
 
 type World struct {
-	config    *WorldConfig
-	iteration int // count rounds for plot filenames
-
+	config        *WorldConfig
 	nodes         map[string]*Client
 	morgue        map[string]*Client
 	queue         []h.Message
@@ -31,6 +29,7 @@ type WorldConfig struct {
 	drainDepth int
 	payloads   int
 	gossipHeat int
+	iteration  int // count rounds for plot filenames
 	fail       WorldFailureRate
 }
 
