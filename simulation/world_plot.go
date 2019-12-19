@@ -7,6 +7,10 @@ import (
 	h "github.com/hashicorp/hyparview"
 )
 
+func (w *World) plotPath(file string) string {
+	return fmt.Sprintf("../data/%04d-%s", w.iteration, file)
+}
+
 func (w *World) isConnected() bool {
 	lost := make(map[string]*Client, len(w.nodes))
 	for k, v := range w.nodes {
@@ -37,6 +41,12 @@ func (w *World) isConnected() bool {
 	return len(lost) == 0
 }
 
+func (w *World) PlotSeed(seed int64) {
+	f, _ := os.Create(w.plotPath("seed"))
+	defer f.Close()
+	f.WriteString(fmt.Sprintf("%d\n", seed))
+}
+
 func (w *World) PlotInDegree() {
 	plot := func(ns func(*h.Hyparview) []*h.Node, path string) {
 		act := map[string]int{}
@@ -64,7 +74,41 @@ func (w *World) PlotInDegree() {
 			f.WriteString(fmt.Sprintf("%d %d\n", i, c))
 		}
 	}
+	af := w.plotPath("active")
+	pf := w.plotPath("passive")
+	plot(func(v *h.Hyparview) []*h.Node { return v.Active.Nodes }, af)
+	plot(func(v *h.Hyparview) []*h.Node { return v.Passive.Nodes }, pf)
+}
 
-	plot(func(v *h.Hyparview) []*h.Node { return v.Active.Nodes }, "../data/active")
-	plot(func(v *h.Hyparview) []*h.Node { return v.Passive.Nodes }, "../data/passive")
+type gossipRound struct {
+	app   int
+	seen  int
+	waste int
+}
+
+// Accumulate data about one round of gossip
+func (w *World) plotGossipRound() {
+	tot := w.gossipTotal
+	if tot == nil {
+		tot = &gossipRound{}
+	}
+
+	app, seen, waste := 0, 0, 0
+	for _, c := range w.nodes {
+		app += c.app
+		seen += c.appSeen
+		waste += c.appWaste
+	}
+	app = app / len(w.nodes)
+
+	rnd := &gossipRound{
+		app:   app,
+		seen:  seen - tot.seen,
+		waste: waste - tot.waste,
+	}
+	tot.app = rnd.app
+	tot.seen += rnd.seen
+	tot.waste += rnd.waste
+	w.gossipTotal = tot
+	w.gossipPlot = append(w.gossipPlot, rnd)
 }
