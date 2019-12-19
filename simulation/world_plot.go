@@ -41,13 +41,13 @@ func (w *World) isConnected() bool {
 	return len(lost) == 0
 }
 
-func (w *World) PlotSeed(seed int64) {
+func (w *World) plotSeed(seed int64) {
 	f, _ := os.Create(w.plotPath("seed"))
 	defer f.Close()
 	f.WriteString(fmt.Sprintf("%d\n", seed))
 }
 
-func (w *World) PlotInDegree() {
+func (w *World) plotInDegree() {
 	plot := func(ns func(*h.Hyparview) []*h.Node, path string) {
 		act := map[string]int{}
 		for _, v := range w.nodes {
@@ -87,7 +87,7 @@ type gossipRound struct {
 }
 
 // Accumulate data about one round of gossip
-func (w *World) plotGossipRound() {
+func (w *World) traceGossipRound() {
 	tot := w.gossipTotal
 	if tot == nil {
 		tot = &gossipRound{}
@@ -111,4 +111,13 @@ func (w *World) plotGossipRound() {
 	tot.waste += rnd.waste
 	w.gossipTotal = tot
 	w.gossipPlot = append(w.gossipPlot, rnd)
+}
+
+func (w *World) plotGossip() {
+	f, _ := os.Create(w.plotPath("gossip"))
+	defer f.Close()
+
+	for i, r := range w.gossipPlot {
+		f.WriteString(fmt.Sprintf("%d %d %d %d\n", i, r.app, r.seen, r.waste))
+	}
 }

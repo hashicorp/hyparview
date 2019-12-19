@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	h "github.com/hashicorp/hyparview"
-	"github.com/kr/pretty"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,37 +31,14 @@ func TestSimulation(t *testing.T) {
 			gossipReply: 5,
 		},
 	})
+
 	assert.True(t, w.isConnected())
 	assert.Equal(t, 0, len(w.queue))
 
-	fwd, ttl, disc, misc, shuf, shufr := 0, 0, 0, 0, 0, 0
-	for _, m := range w.queue {
-		switch r := m.(type) {
-		case *h.ForwardJoinRequest:
-			fwd++
-		case *h.DisconnectRequest:
-			disc++
-		case *h.ShuffleRequest:
-			shuf++
-			ttl += r.TTL
-		case *h.ShuffleReply:
-			shufr++
-		default:
-			misc++
-		}
-	}
-
-	avg := 0
-	if shuf > 0 {
-		avg = ttl / shuf
-	}
-
-	fmt.Printf("FWD %d DISC %d MISC %d SHUF %d (TTL %d) SHUFR %d\n",
-		fwd, disc, misc, shuf, avg, shufr)
-
-	w.PlotSeed(seed)
-	w.PlotInDegree()
-	pretty.Log(w.gossipPlot)
+	// w.debugQueue()
+	w.plotSeed(seed)
+	w.plotInDegree()
+	w.plotGossip()
 }
 
 func simulation(c WorldConfig) *World {
@@ -109,14 +85,38 @@ func simulation(c WorldConfig) *World {
 	ns := w.randNodes()
 	for i := 1; i < c.payloads+1; i++ {
 		node := ns[i] // client connects to a random node
-		// peer := node.Peer()
-		// if peer == nil {
-		// 	w.failActive(node)
-		// 	w.drain(100)
-		// }
-		node.syncGossip(i)
-		w.plotGossipRound()
+		_, ms := node.syncGossip(i)
+		w.send(ms)
+		w.drain(len(ms))
+		w.traceGossipRound()
 	}
 
 	return w
+}
+
+func (w *World) debugQueue() {
+	fwd, ttl, disc, misc, shuf, shufr := 0, 0, 0, 0, 0, 0
+	for _, m := range w.queue {
+		switch r := m.(type) {
+		case *h.ForwardJoinRequest:
+			fwd++
+		case *h.DisconnectRequest:
+			disc++
+		case *h.ShuffleRequest:
+			shuf++
+			ttl += r.TTL
+		case *h.ShuffleReply:
+			shufr++
+		default:
+			misc++
+		}
+	}
+
+	avg := 0
+	if shuf > 0 {
+		avg = ttl / shuf
+	}
+
+	fmt.Printf("FWD %d DISC %d MISC %d SHUF %d (TTL %d) SHUFR %d\n",
+		fwd, disc, misc, shuf, avg, shufr)
 }
