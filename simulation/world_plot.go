@@ -8,7 +8,7 @@ import (
 )
 
 func (w *World) plotPath(file string) string {
-	return fmt.Sprintf("../data/%04d-%s", w.iteration, file)
+	return fmt.Sprintf("../data/%04d-%s", w.config.iteration, file)
 }
 
 func (w *World) isConnected() bool {
@@ -81,32 +81,33 @@ func (w *World) plotInDegree() {
 }
 
 type gossipRound struct {
-	app   int
+	miss  int
 	seen  int
 	waste int
 }
 
 // Accumulate data about one round of gossip
-func (w *World) traceGossipRound() {
+func (w *World) traceGossipRound(app int) {
 	tot := w.gossipTotal
 	if tot == nil {
 		tot = &gossipRound{}
 	}
 
-	app, seen, waste := 0, 0, 0
+	miss, seen, waste := 0, 0, 0
 	for _, c := range w.nodes {
-		app += c.app
+		if c.app < app {
+			miss += 1
+		}
 		seen += c.appSeen
 		waste += c.appWaste
 	}
-	app = app / len(w.nodes)
 
 	rnd := &gossipRound{
-		app:   app,
+		miss:  miss,
 		seen:  seen - tot.seen,
 		waste: waste - tot.waste,
 	}
-	tot.app = rnd.app
+	tot.miss = rnd.miss
 	tot.seen += rnd.seen
 	tot.waste += rnd.waste
 	w.gossipTotal = tot
@@ -118,6 +119,6 @@ func (w *World) plotGossip() {
 	defer f.Close()
 
 	for i, r := range w.gossipPlot {
-		f.WriteString(fmt.Sprintf("%d %d %d %d\n", i, r.app, r.seen, r.waste))
+		f.WriteString(fmt.Sprintf("%d %d %d %d\n", i+1, r.miss, r.seen, r.waste))
 	}
 }
