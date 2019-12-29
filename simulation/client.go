@@ -25,6 +25,10 @@ func makeClient(w *World, id string) *Client {
 }
 
 func (c *Client) failActive(peer *Client) (ns []h.Message) {
+	if peer != nil {
+		c.Active.DelNode(peer.Self)
+	}
+
 	for _, n := range c.Passive.Shuffled() {
 		if c.Active.IsEmpty() {
 			// High priority can't be rejected, so send async
@@ -66,9 +70,15 @@ func (c *Client) syncGossip(payload int) (hot bool, ms []h.Message) {
 			continue
 		}
 
-		peer := c.world.get(c.Peer().ID)
+		node := c.Peer()
+		if node == nil {
+			ms = append(ms, c.failActive(nil)...)
+			continue
+		}
+
+		peer := c.world.get(node.ID)
 		if shouldFail(c.world.config.fail.active) {
-			c.failActive(peer)
+			ms = append(ms, c.failActive(nil)...)
 			continue
 		}
 
