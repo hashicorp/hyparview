@@ -1,17 +1,15 @@
-test: .build-test ## run the default tests
-.PHONY: test
+export SIMULATION_COUNT=3
 
-.build-test: plot/active.png plot/passive.png
-	touch $@
+simulation: ## run the simulation test
+	mkdir -p plot data
+	cd simulation && gotestsum
+	make plot
+.PHONY: simulation
 
-plot:
-	mkdir plot
-
-data:
-	mkdir data
-
-plot/%.png: data/% plot data
-	./bin/plot $^ $* > $@
+plot: ## make plots from simulation data
+	./bin/plot-degree "In Degree" "active" $(SIMULATION_COUNT) > plot/degree.png
+	./bin/plot-gossip $(SIMULATION_COUNT) > plot/gossip.png
+.PHONY: plot
 
 # via https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 .PHONY: help

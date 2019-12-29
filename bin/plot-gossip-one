@@ -12,5 +12,4 @@ set ylabel "Messages"
 set xrange [1:30]
 set yrange [0:10000]
 
-file(n) = sprintf("data/%04d-gossip", n)
-plot for [world=1:ARG1] for [col=2:4] file(world) using 1:col with lines title columnheader
+plot for [col=2:4] ARG1 using 1:col with lines title columnheader

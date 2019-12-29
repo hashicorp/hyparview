@@ -1,7 +1,0 @@
-#!/usr/bin/env gnuplot -c
-# set title "In Degree"
-set xlabel "In Degree"
-set ylabel "Count Peers"
-set ytics "10"
-set term png tiny
-plot ARG1 title ARG2 with lines
