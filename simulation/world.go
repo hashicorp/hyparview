@@ -11,7 +11,7 @@ type World struct {
 	totalPayloads int
 
 	gossipTotal *gossipRound
-	gossipPlot  []*gossipRound
+	gossipRound []*gossipRound
 }
 
 type WorldFailureRate struct {

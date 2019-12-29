@@ -84,13 +84,14 @@ type gossipRound struct {
 	miss  int
 	seen  int
 	waste int
+	maint int
 }
 
 // Accumulate data about one round of gossip
-func (w *World) traceGossipRound(app int) {
+func (w *World) traceRound(app int) {
 	tot := w.gossipTotal
 	if tot == nil {
-		tot = &gossipRound{}
+		tot = &gossipRound{maint: w.totalMessages}
 	}
 
 	miss, seen, waste := 0, 0, 0
@@ -106,19 +107,22 @@ func (w *World) traceGossipRound(app int) {
 		miss:  miss,
 		seen:  seen - tot.seen,
 		waste: waste - tot.waste,
+		maint: w.totalMessages - tot.maint,
 	}
 	tot.miss = rnd.miss
 	tot.seen += rnd.seen
 	tot.waste += rnd.waste
+	tot.maint += rnd.maint
 	w.gossipTotal = tot
-	w.gossipPlot = append(w.gossipPlot, rnd)
+	w.gossipRound = append(w.gossipRound, rnd)
 }
 
 func (w *World) plotGossip() {
 	f, _ := os.Create(w.plotPath("gossip"))
 	defer f.Close()
 
-	for i, r := range w.gossipPlot {
-		f.WriteString(fmt.Sprintf("%d %d %d %d\n", i+1, r.miss, r.seen, r.waste))
+	f.WriteString(fmt.Sprintf("%s %s %s %s\n", "Round", "Gossip", "Waste", "Hyparview"))
+	for i, r := range w.gossipRound {
+		f.WriteString(fmt.Sprintf("%d %d %d %d\n", i+1, r.seen, r.waste, r.maint))
 	}
 }

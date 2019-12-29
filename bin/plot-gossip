@@ -1,0 +1,9 @@
+#!/usr/bin/env gnuplot -c
+set style data histograms
+set style histogram rowstacked
+set boxwidth 1 relative
+set style fill solid 1.0 border -1
+set datafile separator " "
+set term png tiny
+set xlabel "Gossip Round"
+plot ARG1 using 2:xtic(1), for [i=2:3] '' using i
