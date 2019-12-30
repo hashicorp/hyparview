@@ -35,11 +35,13 @@ func (v *ViewPart) DelIndex(i int) {
 	v.Nodes = append(ns[:i], ns[i+1:]...)
 }
 
-func (v *ViewPart) DelNode(n *Node) {
+func (v *ViewPart) DelNode(n *Node) bool {
 	i := v.ContainsIndex(n)
 	if i > -1 {
 		v.DelIndex(i)
+		return true
 	}
+	return false
 }
 
 func (v *ViewPart) GetIndex(i int) *Node {
