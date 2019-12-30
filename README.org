@@ -1,9 +1,6 @@
 * What's This?
 
-- Rogue project (aka push directly to master), total time spent:
-  - one plane ride
-  - +one+ two beers at local taphouse
-  - two evenings of simulation work
+- Rogue project (aka push directly to master), proof of concept
 - Partial membership for gossip clusters
 - 10k node cluster requires 5 active and 30 passive peers in views at
   each node
