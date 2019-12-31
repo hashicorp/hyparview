@@ -10,6 +10,11 @@
 - Side goal: demonstrate separation of state changes from async or
   mutex behavior to improve testing options
 
+* Live Test
+
+There's an example secure GRPC application of this library at
+[[https://github.com/hashicorp/hyparview-example][hyparview-example]]. It will be used for a live test on hardware.
+
 * Roadmap
 
 - [X] Rename active, it defines both windows
@@ -31,6 +36,6 @@
 : ActiveSize * RWL.Active ForwardJoinRequests => 30
 - [X] Shuffle
 : 1 + RWL.Shuffle + ShuffleReply => 8 (needs 9...)
-- [ ] Maintain active view (rejoin when empty)
-- [ ] Active failures
-- [ ] Request failures
+- [X] Maintain active view (rejoin when empty)
+- [X] Active failures
+- [X] Request failures
