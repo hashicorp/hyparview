@@ -26,9 +26,6 @@ There's an example secure GRPC application of this library at
   - [X] Keep the random seed for replay
   - [X] Gossip application
   - [ ] Active view maintenance
-- [ ] Live client example
-  - [ ] grpc
-  - [ ] TLS
 
 * Simulation
 
