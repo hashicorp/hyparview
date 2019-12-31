@@ -164,12 +164,12 @@ func (v *Hyparview) RecvNeighbor(r *NeighborRequest) (ms []Message) {
 
 // SendShuffle creates the periodic state to mark and message for maintaining the passive
 // view. Paper
-func (v *Hyparview) SendShuffle(node *Node) (ms []Message) {
+func (v *Hyparview) SendShuffle(node *Node) *ShuffleRequest {
 	as := v.Active.Shuffled()[:v.ShuffleActive]
 	ps := v.Passive.Shuffled()[:v.ShufflePassive]
 	m := SendShuffle(node, v.Self, as, ps, v.RWL.Shuffle)
 	v.Shuffle = m
-	return append(ms, m)
+	return m
 }
 
 // RecvShuffle processes a shuffle request. Paper

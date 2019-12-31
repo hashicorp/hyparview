@@ -41,7 +41,7 @@ func simulation(c WorldConfig) *World {
 		for i := 1; i < len(ns); i++ {
 			me := w.get(ns[i-1])
 			thee := w.get(ns[i])
-			w.send(me.SendShuffle(thee.Self))
+			w.sendOne(me.SendShuffle(thee.Self))
 			w.drain(9)
 		}
 	}
