@@ -23,3 +23,17 @@ func RintCrypto(n int) int {
 func Rint(n int) int {
 	return rand.Intn(n + 1)
 }
+
+func max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
