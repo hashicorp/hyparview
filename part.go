@@ -24,6 +24,14 @@ func (v *ViewPart) Size() int {
 	return len(v.Nodes)
 }
 
+func (v *ViewPart) Copy() *ViewPart {
+	w := *v
+	nodes := make([]*Node, len(v.Nodes))
+	copy(nodes, v.Nodes)
+	w.Nodes = nodes
+	return &w
+}
+
 func (v *ViewPart) Add(n *Node) {
 	if !v.Contains(n) {
 		v.Nodes = append(v.Nodes, n)
@@ -36,9 +44,9 @@ func (v *ViewPart) DelIndex(i int) {
 }
 
 func (v *ViewPart) DelNode(n *Node) bool {
-	i := v.ContainsIndex(n)
-	if i > -1 {
-		v.DelIndex(i)
+	idx := v.ContainsIndex(n)
+	if idx >= 0 {
+		v.DelIndex(idx)
 		return true
 	}
 	return false
@@ -78,5 +86,5 @@ func (v *ViewPart) ContainsIndex(n *Node) int {
 }
 
 func (v *ViewPart) Contains(n *Node) bool {
-	return v.ContainsIndex(n) > 0
+	return v.ContainsIndex(n) >= 0
 }
