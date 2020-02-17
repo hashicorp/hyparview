@@ -282,3 +282,12 @@ func (v *Hyparview) Peer() *Node {
 	}
 	return v.Active.RandNode()
 }
+
+// Copy returns a copy thats safe to modify. Shuffle is copied as a pointer because each
+// ShuffleRequest is immutable once created
+func (v *Hyparview) Copy() *Hyparview {
+	out := *v
+	out.Active = v.Active.Copy()
+	out.Passive = v.Passive.Copy()
+	return &out
+}
