@@ -65,9 +65,16 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 	sender := r.From
 	ttl := r.TTL
 
-	if ttl == 0 || v.Active.IsEmpty() {
-		v.AddActive(node) // Don't bother to catch disconnect, there won't be any
+	if v.Active.IsEmpty() {
+		// Don't bother to catch disconnect, there won't be any
 		// Stop on active empty because who else am I going to send it to
+		v.AddActive(node)
+		return ms
+	}
+
+	if ttl == 0 {
+		ms = append(ms, v.AddActive(node)...)
+		log.Printf("debug: forward join add %s", r.From.Addr)
 		return ms
 	}
 
