@@ -100,6 +100,7 @@ func (v *Hyparview) DropRandActive() (ms []Message) {
 	idx := v.Active.RandIndex()
 	node := v.Active.GetIndex(idx)
 	v.Active.DelIndex(idx)
+	v.Passive.Add(node)
 	ms = append(ms, SendDisconnect(node, v.Self))
 	return ms
 }
@@ -155,6 +156,7 @@ func (v *Hyparview) RecvDisconnect(r *DisconnectRequest) {
 }
 
 // RecvNeighbor processes a neighbor, sent during failure recovery
+// Return at most one NeighborRefuse, which must be returned to the client
 func (v *Hyparview) RecvNeighbor(r *NeighborRequest) (ms []Message) {
 	node := r.From
 	priority := r.Priority
