@@ -74,7 +74,6 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 
 	if ttl == 0 {
 		ms = append(ms, v.AddActive(node)...)
-		log.Printf("debug: forward join add %s", r.From.Addr)
 		return ms
 	}
 
