@@ -4,17 +4,29 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kr/pretty"
 	"github.com/stretchr/testify/require"
 )
 
-func TestShuffleRecv(t *testing.T) {
-	ns := make([]*Node, 10)
-	for i := 0; i < 10; i++ {
+func nodes(n int) []*Node {
+	ns := make([]*Node, n)
+	for i := 0; i < n; i++ {
 		ns[i] = &Node{
 			Addr: fmt.Sprintf("127.0.0.1:1000%d", i),
 		}
 	}
+	return ns
+}
 
+func TestShuffleSend(t *testing.T) {
+	ns := nodes(2)
+	hv := CreateView(ns[0], 0)
+	m := hv.SendShuffle(ns[1])
+	pretty.Log(m)
+}
+
+func TestShuffleRecv(t *testing.T) {
+	ns := nodes(10)
 	hv := CreateView(ns[0], 0)
 
 	req := &ShuffleRequest{
