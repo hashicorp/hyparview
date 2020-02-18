@@ -14,13 +14,13 @@ func simulation(c WorldConfig) *World {
 		queue:  make([]h.Message, 0),
 	}
 
-	// Make all the nodes
+	// log.Printf("debug: make all the nodes")
 	for i := 0; i < c.peers; i++ {
 		id := fmt.Sprintf("n%d", i)
 		w.nodes[id] = makeClient(w, id)
 	}
 
-	// Connect all the nodes
+	// log.Printf("debug: connect all the nodes")
 	for i := 0; i < c.peers; i++ {
 		ns := w.nodeKeys()
 		shuffle(ns)
@@ -34,7 +34,7 @@ func simulation(c WorldConfig) *World {
 		}
 	}
 
-	// Shuffle a few times
+	// log.Printf("debug: shuffle a few times")
 	for i := 0; i < c.rounds; i++ {
 		ns := w.nodeKeys()
 		shuffle(ns)
@@ -46,7 +46,7 @@ func simulation(c WorldConfig) *World {
 		}
 	}
 
-	// Send some messages
+	// log.Printf("debug: send some gossip messages")
 	ns := w.randNodes()
 	for i := 1; i < c.payloads+1; i++ {
 		node := ns[i] // client connects to a random node
