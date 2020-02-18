@@ -72,6 +72,11 @@ func (c *Client) syncGossip(payload int) (hot bool, ms []h.Message) {
 
 		node := c.Peer()
 		if node == nil {
+			// We're disconnected and can't make forward progress
+			if c.Passive.IsEmpty() {
+				return true, ms
+			}
+
 			ms = append(ms, c.failActive(nil)...)
 			continue
 		}
