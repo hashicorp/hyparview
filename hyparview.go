@@ -201,21 +201,20 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	// Keep the sent passive peers
 	// addShuffle is going to destructively use this
 
-	sent := make([]*Node, 0)
-	new := v.Passive.Copy()
-
-	v.addShuffle(r.From, sent, new)
-	for _, n := range r.Passive {
-		v.addShuffle(n, sent, new)
+	v.addShuffle(r.From)
+	for _, n := range r.Active {
+		v.addShuffle(n)
 	}
-	v.Passive = new
+	for _, n := range r.Passive {
+		v.addShuffle(n)
+	}
 }
 
 // addShuffle processes one node to be added to the passive view. If the node is us or
 // otherwise known, ignore it. If passive is full, eject first one of the nodes we sent then
 // a node at random to make room.
-func (v *Hyparview) addShuffle(n *Node, sent []*Node, passive *ViewPart) {
-	if n.Equal(v.Self) || v.Active.Contains(n) || passive.Contains(n) {
+func (v *Hyparview) addShuffle(n *Node) {
+	if n.Equal(v.Self) || v.Active.Contains(n) || v.Passive.Contains(n) {
 		return
 	}
 
@@ -238,17 +237,9 @@ func (v *Hyparview) addShuffle(n *Node, sent []*Node, passive *ViewPart) {
 }
 
 func (v *Hyparview) RecvShuffleReply(r *ShuffleReply) {
-	var sent []*Node
-	if v.Shuffle != nil {
-		sent = v.Shuffle.Passive
-	}
-	v.Shuffle = nil
-
-	new := v.Passive.Copy()
 	for _, n := range r.Passive {
-		v.addShuffle(n, sent, new)
+		v.addShuffle(n)
 	}
-	v.Passive = new
 }
 
 // Recv is a helper method that dispatches to the correct recv
