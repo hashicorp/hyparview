@@ -1,6 +1,9 @@
 package simulation
 
-import h "github.com/hashicorp/hyparview"
+import (
+	h "github.com/hashicorp/hyparview"
+	"github.com/kr/pretty"
+)
 
 type World struct {
 	config        *WorldConfig
@@ -26,7 +29,6 @@ type WorldConfig struct {
 	rounds     int
 	peers      int
 	mortality  int
-	drainDepth int
 	payloads   int
 	gossipHeat int
 	iteration  int // count rounds for plot filenames
@@ -55,39 +57,18 @@ func (w *World) randNodes() (ns []*Client) {
 	return ns
 }
 
-func (w *World) send(ms []h.Message) {
-	w.totalMessages += len(ms)
-	w.queue = append(w.queue, ms...)
-}
+// drain the queue of outgoing messages, delivering them
+func (w *World) drain(c *Client) {
+	ms := c.messages()
+	pretty.Log("drain", ms)
 
-func (w *World) sendOne(m h.Message) {
-	w.send([]h.Message{m})
-}
-
-// drain the queue, appending resulting messages back onto the queue
-func (w *World) drain(depth int) {
-	for depth != 0 {
-		if len(w.queue) == 0 {
-			return
-		}
-
-		m := w.queue[0]
-		w.queue = w.queue[1:]
-
+	for _, m := range ms {
 		v := w.get(m.To().ID)
 		if v != nil {
-			ms := v.Recv(m)
-			w.send(ms)
+			v.Recv(m)
+			w.drain(v)
 		}
-
-		depth--
 	}
-}
 
-func (w *World) drainAll() {
-	// This should be -1, but it keeps blowing the stack. Suggests I've got a bug where
-	// I never stop sending messages
-
-	// w.drain(-1)
-	w.drain(100)
+	ms = ns
 }
