@@ -29,10 +29,12 @@ func simulation(c WorldConfig) *World {
 
 		for _, id := range ns {
 			me := w.get(id)
-			w.send(root.Recv(h.SendJoin(root.Self, me.Self)))
-			w.drain(c.drainDepth)
+			root.Recv(h.SendJoin(root.Self, me.Self))
+			w.drain(root)
 		}
 	}
+
+	return w
 
 	// log.Printf("debug: shuffle a few times")
 	for i := 0; i < c.rounds; i++ {
@@ -41,8 +43,8 @@ func simulation(c WorldConfig) *World {
 		for i := 1; i < len(ns); i++ {
 			me := w.get(ns[i-1])
 			thee := w.get(ns[i])
-			w.sendOne(me.SendShuffle(thee.Self))
-			w.drain(9)
+			me.SendShuffle(thee.Self)
+			w.drain(me)
 		}
 	}
 
@@ -51,13 +53,9 @@ func simulation(c WorldConfig) *World {
 	for i := 1; i < c.payloads+1; i++ {
 		node := ns[i] // client connects to a random node
 
-		ms := w.repairEmptyActive()
-		w.send(ms)
-		w.drain(len(ms))
-
-		_, ms = node.syncGossip(i)
-		w.send(ms)
-		w.drain(len(ms))
+		// gossip drains all the hyparview messages and sends all the gossip
+		// messages before returning
+		node.gossip(i)
 
 		w.traceRound(i)
 	}
@@ -68,7 +66,7 @@ func simulation(c WorldConfig) *World {
 func (w *World) repairEmptyActive() (ms []h.Message) {
 	for _, n := range w.nodes {
 		if n.Active.IsEmpty() {
-			ms = append(ms, n.failActive(nil)...)
+			n.failActive(nil)
 		}
 	}
 	return ms
