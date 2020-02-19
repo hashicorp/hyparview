@@ -14,14 +14,16 @@ type Config struct {
 	RWL            ConfigRandomWalkLength
 }
 
-type Sender func(...Message)
+type Sender interface {
+	Send(...Message)
+}
 
 type Hyparview struct {
 	Config
 	Active  *ViewPart
 	Passive *ViewPart
 	Self    *Node
-	Send    Sender
+	S       Sender
 	// The passive window peers sent in the last shuffle request
 	LastShuffle []*Node
 }
@@ -59,7 +61,7 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) {
 		if n.Equal(r.From) {
 			continue
 		}
-		v.Send(SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
+		v.S.Send(SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
 	}
 
 	v.Active.Add(r.From)
@@ -81,7 +83,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
 		if n.Equal(r.From) {
 			continue
 		}
-		v.Send(SendForwardJoin(n, v.Self, r.Join, r.TTL-1))
+		v.S.Send(SendForwardJoin(n, v.Self, r.Join, r.TTL-1))
 		break
 	}
 }
@@ -93,7 +95,7 @@ func (v *Hyparview) DropRandActive() {
 	node := v.Active.GetIndex(idx)
 	v.Active.DelIndex(idx)
 	v.Passive.Add(node)
-	v.Send(SendDisconnect(node, v.Self))
+	v.S.Send(SendDisconnect(node, v.Self))
 	return
 }
 
@@ -169,7 +171,7 @@ func (v *Hyparview) SendShuffle(node *Node) {
 	as := v.Active.Shuffled()[:min(v.ShuffleActive, v.Active.Size())]
 	ps := v.Passive.Shuffled()[:min(v.ShufflePassive, v.Passive.Size())]
 	v.LastShuffle = ps
-	v.Send(SendShuffle(node, v.Self, as, ps, v.RWL.Shuffle))
+	v.S.Send(SendShuffle(node, v.Self, as, ps, v.RWL.Shuffle))
 }
 
 // RecvShuffle processes a shuffle request. Paper
@@ -180,7 +182,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 			if n.Equal(r.From) {
 				continue
 			}
-			v.Send(SendShuffle(n, r.From, r.Active, r.Passive, r.TTL-1))
+			v.S.Send(SendShuffle(n, r.From, r.Active, r.Passive, r.TTL-1))
 			break
 		}
 		return
@@ -196,7 +198,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	// Send back l shuffled results
 	// FIXME this maybe should be the number of configured peers, not the number sent
 	ps := v.Passive.Shuffled()[0:l]
-	v.Send(SendShuffleReply(r.From, v.Self, ps))
+	v.S.Send(SendShuffleReply(r.From, v.Self, ps))
 
 	// Keep the sent passive peers
 	// addShuffle is going to destructively use this
