@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kr/pretty"
 	"github.com/stretchr/testify/require"
 )
 
-func nodes(n int) []*Node {
+func makeNodes(n int) []*Node {
 	ns := make([]*Node, n)
 	for i := 0; i < n; i++ {
 		ns[i] = &Node{
@@ -18,16 +17,29 @@ func nodes(n int) []*Node {
 	return ns
 }
 
-func TestShuffleSend(t *testing.T) {
-	ns := nodes(2)
+func testView(count int) (*Hyparview, *SliceSender, []*Node) {
+	ns := makeNodes(count)
 	hv := CreateView(ns[0], 0)
-	m := hv.SendShuffle(ns[1])
-	pretty.Log(m)
+	s := NewSliceSender()
+	hv.S = s
+	return hv, s, ns
+}
+
+func TestShuffleSend(t *testing.T) {
+	hv, s, ns := testView(2)
+
+	hv.SendShuffle(ns[1])
+	raw := s.Reset()[0]
+	m := raw.(*ShuffleRequest)
+
+	require.NotNil(t, m.Active)
+	require.NotNil(t, m.Passive)
+	require.Equal(t, 0, len(m.Active))
+	require.Equal(t, 0, len(m.Passive))
 }
 
 func TestShuffleRecv(t *testing.T) {
-	ns := nodes(10)
-	hv := CreateView(ns[0], 0)
+	hv, _, ns := testView(10)
 
 	req := &ShuffleRequest{
 		to:      ns[0],
