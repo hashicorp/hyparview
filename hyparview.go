@@ -14,16 +14,11 @@ type Config struct {
 	RWL            ConfigRandomWalkLength
 }
 
-type Sender interface {
-	Send(...Message)
-}
-
 type Hyparview struct {
 	Config
 	Active  *ViewPart
 	Passive *ViewPart
 	Self    *Node
-	S       Sender
 	// The passive window peers sent in the last shuffle request
 	LastShuffle []*Node
 }
@@ -37,7 +32,7 @@ func CreateView(self *Node, n int) *Hyparview {
 	return &Hyparview{
 		Config: Config{
 			ShuffleActive:  3,
-			ShufflePassive: 6,
+			ShufflePassive: 4,
 			RWL: ConfigRandomWalkLength{
 				Active:  6,
 				Passive: 3,
@@ -51,8 +46,9 @@ func CreateView(self *Node, n int) *Hyparview {
 }
 
 // RecvJoin processes a Join following the paper
-func (v *Hyparview) RecvJoin(r *JoinRequest) {
+func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 	if v.Active.IsFull() {
+		ms = append(ms, v.DropRandActive()...)
 		v.DropRandActive()
 	}
 
@@ -61,17 +57,19 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) {
 		if n.Equal(r.From) {
 			continue
 		}
-		v.S.Send(SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
+		ms = append(ms, SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
 	}
 
 	v.Active.Add(r.From)
+
+	return ms
 }
 
 // RecvForwardJoin processes a ForwardJoin following the paper
-func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
+func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 	if r.TTL == 0 || v.Active.IsEmpty() {
-		v.AddActive(r.Join)
-		return
+		ms = append(ms, v.AddActive(r.Join)...)
+		return ms
 	}
 
 	if r.TTL == v.RWL.Passive {
@@ -83,34 +81,38 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
 		if n.Equal(r.From) {
 			continue
 		}
-		v.S.Send(SendForwardJoin(n, v.Self, r.Join, r.TTL-1))
+		ms = append(ms, SendForwardJoin(n, v.Self, r.Join, r.TTL-1))
 		break
 	}
+
+	return ms
 }
 
 // DropRandActive removes a random active peer and returns the disconnect message following
 // the paper
-func (v *Hyparview) DropRandActive() {
+func (v *Hyparview) DropRandActive() (ms []Message) {
 	idx := v.Active.RandIndex()
 	node := v.Active.GetIndex(idx)
 	v.Active.DelIndex(idx)
 	v.Passive.Add(node)
-	v.S.Send(SendDisconnect(node, v.Self))
-	return
+	ms = append(ms, SendDisconnect(node, v.Self))
+	return ms
 }
 
 // AddActive adds a node to the active view, possibly dropping an active peer to make room.
 // Paper
-func (v *Hyparview) AddActive(node *Node) {
+func (v *Hyparview) AddActive(node *Node) (ms []Message) {
 	if node.Equal(v.Self) {
 		return
 	}
 
 	if v.Active.IsFull() {
-		v.DropRandActive()
+		ms = append(ms, v.DropRandActive()...)
 	}
 
 	v.Active.Add(node)
+
+	return ms
 }
 
 // AddPassive adds a node to the passive view, possibly dropping a passive peer to make
@@ -150,7 +152,7 @@ func (v *Hyparview) RecvDisconnect(r *DisconnectRequest) {
 
 // RecvNeighbor processes a neighbor, sent during failure recovery
 // Return at most one NeighborRefuse, which must be returned to the client
-func (v *Hyparview) RecvNeighbor(r *NeighborRequest) *NeighborRefuse {
+func (v *Hyparview) RecvNeighbor(r *NeighborRequest) Message {
 	node := r.From
 	priority := r.Priority
 	if v.Active.IsFull() && priority == LowPriority {
@@ -167,25 +169,26 @@ func (v *Hyparview) RecvNeighbor(r *NeighborRequest) *NeighborRefuse {
 
 // SendShuffle creates the periodic state to mark and message for maintaining the passive
 // view. Paper
-func (v *Hyparview) SendShuffle(node *Node) {
+func (v *Hyparview) SendShuffle(node *Node) (ms []Message) {
 	as := v.Active.Shuffled()[:min(v.ShuffleActive, v.Active.Size())]
 	ps := v.Passive.Shuffled()[:min(v.ShufflePassive, v.Passive.Size())]
 	v.LastShuffle = ps
-	v.S.Send(SendShuffle(node, v.Self, as, ps, v.RWL.Shuffle))
+	ms = append(ms, SendShuffle(node, v.Self, as, ps, v.RWL.Shuffle))
+	return ms
 }
 
 // RecvShuffle processes a shuffle request. Paper
-func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
+func (v *Hyparview) RecvShuffle(r *ShuffleRequest) (ms []Message) {
 	if r.TTL >= 0 && !v.Active.IsEmpty() { // FIXME this may be 1
 		// Forward to one active non-sender
 		for _, n := range v.Active.Shuffled() {
 			if n.Equal(r.From) {
 				continue
 			}
-			v.S.Send(SendShuffle(n, r.From, r.Active, r.Passive, r.TTL-1))
+			ms = append(ms, SendShuffle(n, r.From, r.Active, r.Passive, r.TTL-1))
 			break
 		}
-		return
+		return ms
 	}
 
 	// min(Number of peers in the request, my passive view)
@@ -198,7 +201,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	// Send back l shuffled results
 	// FIXME this maybe should be the number of configured peers, not the number sent
 	ps := v.Passive.Shuffled()[0:l]
-	v.S.Send(SendShuffleReply(r.From, v.Self, ps))
+	ms = append(ms, SendShuffleReply(r.From, v.Self, ps))
 
 	// Keep the sent passive peers
 	// addShuffle is going to destructively use this
@@ -210,6 +213,8 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	for _, n := range r.Passive {
 		v.addShuffle(n)
 	}
+
+	return ms
 }
 
 // addShuffle processes one node to be added to the passive view. If the node is us or
@@ -245,30 +250,30 @@ func (v *Hyparview) RecvShuffleReply(r *ShuffleReply) {
 }
 
 // Recv is a helper method that dispatches to the correct recv
-func (v *Hyparview) Recv(m Message) *NeighborRefuse {
+func (v *Hyparview) Recv(m Message) (ms []Message) {
 	switch m1 := m.(type) {
 	case *JoinRequest:
-		v.RecvJoin(m1)
+		ms = append(ms, v.RecvJoin(m1)...)
 		// if len(ms) > v.Active.Max {
 		// 	fmt.Printf("JOIN %d\n", len(ms))
 		// }
 	case *ForwardJoinRequest:
-		v.RecvForwardJoin(m1)
+		ms = append(ms, v.RecvForwardJoin(m1)...)
 		// if len(ms) > 1 {
 		// 	fmt.Printf("FORWARD %d\n", len(ms))
 		// }
 	case *DisconnectRequest:
 		v.RecvDisconnect(m1)
 	case *NeighborRequest:
-		return v.RecvNeighbor(m1)
+		ms = append(ms, v.RecvNeighbor(m1))
 	case *ShuffleRequest:
-		v.RecvShuffle(m1)
+		ms = append(ms, v.RecvShuffle(m1)...)
 	case *ShuffleReply:
 		v.RecvShuffleReply(m1)
 	default:
 		// log unimplemented?
 	}
-	return nil
+	return ms
 }
 
 // Peer returns a random active peer
