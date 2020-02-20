@@ -2,7 +2,6 @@ package simulation
 
 import (
 	h "github.com/hashicorp/hyparview"
-	"github.com/kr/pretty"
 )
 
 type Client struct {
@@ -23,14 +22,7 @@ func makeClient(w *World, id string) *Client {
 		world:     w,
 		out:       make([]h.Message, 0),
 	}
-	c.S = c
 	return c
-}
-
-func (c *Client) Send(ms ...h.Message) {
-	c.out = append(c.out, ms...)
-
-	pretty.Log("SENT", len(ms), len(c.out))
 }
 
 func (c *Client) messages() []h.Message {
@@ -39,7 +31,7 @@ func (c *Client) messages() []h.Message {
 	return out
 }
 
-func (c *Client) failActive(peer *Client) {
+func (c *Client) failActive(peer *Client) (ms []h.Message) {
 	if peer != nil {
 		c.Active.DelNode(peer.Self)
 	}
@@ -47,8 +39,7 @@ func (c *Client) failActive(peer *Client) {
 	for _, n := range c.Passive.Shuffled() {
 		if c.Active.IsEmpty() {
 			// High priority can't be rejected, so send async
-			m := h.SendNeighbor(n, c.Self, h.HighPriority)
-			c.S.Send(m)
+			ms = append(ms, h.SendNeighbor(n, c.Self, h.HighPriority))
 			break
 		} else {
 			m := h.SendNeighbor(n, c.Self, h.LowPriority)
@@ -58,12 +49,14 @@ func (c *Client) failActive(peer *Client) {
 			// any low priority response is failure
 			if refuse != nil {
 				c.DelPassive(n)
-				c.AddActive(n)
+				ms = append(ms, c.AddActive(n)...)
 				break
 			}
 			c.DelPassive(n)
 		}
 	}
+
+	return ms
 }
 
 type gossip struct {
@@ -92,8 +85,6 @@ func (c *Client) recvGossip(m *gossip) bool {
 	c.appSeen += 1
 	c.appHot = c.world.config.gossipHeat
 
-	pretty.Log("gossip", m.app)
-
 	// Count hops between peers
 	m.hops += 1
 
@@ -112,18 +103,15 @@ func (c *Client) recvGossip(m *gossip) bool {
 				return true
 			}
 
-			c.failActive(nil)
+			c.world.drain(c.failActive(nil))
 			continue
 		}
 
 		peer := c.world.get(node.ID)
 		if shouldFail(c.world.config.fail.active) {
-			c.failActive(peer)
+			c.world.drain(c.failActive(peer))
 			continue
 		}
-
-		// Process any hyparview messages
-		c.world.drain(c)
 
 		hot := peer.recvGossip(m)
 		if !hot || shouldFail(c.world.config.fail.gossipReply) {

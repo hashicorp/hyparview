@@ -2,7 +2,6 @@ package simulation
 
 import (
 	h "github.com/hashicorp/hyparview"
-	"github.com/kr/pretty"
 )
 
 type World struct {
@@ -57,18 +56,22 @@ func (w *World) randNodes() (ns []*Client) {
 	return ns
 }
 
-// drain the queue of outgoing messages, delivering them
-func (w *World) drain(c *Client) {
-	ms := c.messages()
-	pretty.Log("drain", ms)
+func (w *World) send(ms ...h.Message) {
+	w.totalMessages += len(ms)
+	w.queue = append(w.queue, ms...)
+}
 
+func (w *World) drainQueue() {
+	w.drain(w.queue)
+}
+
+// send all the messages in this slice
+func (w *World) drain(ms []h.Message) {
 	for _, m := range ms {
 		v := w.get(m.To().ID)
 		if v != nil {
-			v.Recv(m)
-			w.drain(v)
+			ns := v.Recv(m)
+			w.drain(ns)
 		}
 	}
-
-	ms = ns
 }

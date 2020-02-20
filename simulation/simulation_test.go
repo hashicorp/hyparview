@@ -39,7 +39,6 @@ func testSimulation(t *testing.T, i int) {
 		rounds:     5,
 		peers:      1000,
 		mortality:  30,
-		drainDepth: 30,
 		payloads:   30,
 		gossipHeat: 4,
 		iteration:  i,
