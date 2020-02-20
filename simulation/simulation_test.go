@@ -51,7 +51,7 @@ func testSimulation(t *testing.T, i int) {
 		},
 	})
 
-	// assert.True(t, w.isConnected())
+	assert.True(t, w.isConnected())
 	w.isConnected()
 	assert.Equal(t, 0, len(w.queue))
 
