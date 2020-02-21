@@ -30,19 +30,11 @@ func simulation(c WorldConfig) *World {
 		for _, id := range ns {
 			me := w.get(id)
 			ms := root.Recv(h.SendJoin(root.Self, me.Self))
-			w.drain(ms)
+			w.send(ms...)
 		}
-	}
 
-	// log.Printf("debug: shuffle a few times")
-	for i := 0; i < c.rounds; i++ {
-		ns := w.nodeKeys()
-		shuffle(ns)
-		for i := 1; i < len(ns); i++ {
-			me := w.get(ns[i-1])
-			thee := w.get(ns[i])
-			ms := me.SendShuffle(thee.Self)
-			w.drain(ms)
+		if i%c.shuffleFreq == 0 {
+			w.shuffleAll()
 		}
 	}
 
@@ -56,9 +48,24 @@ func simulation(c WorldConfig) *World {
 		node.gossip(i)
 
 		w.traceRound(i)
+
+		if i%c.shuffleFreq == 0 {
+			w.shuffleAll()
+		}
 	}
 
 	return w
+}
+
+func (w *World) shuffleAll() {
+	ns := w.nodeKeys()
+	shuffle(ns)
+	for i := 1; i < len(ns); i++ {
+		me := w.get(ns[i-1])
+		thee := w.get(ns[i])
+		m := me.SendShuffle(thee.Self)
+		w.send(m)
+	}
 }
 
 func (w *World) repairEmptyActive() (ms []h.Message) {

@@ -36,19 +36,14 @@ func testSimulation(t *testing.T, i int) {
 	fmt.Printf("Seed %d\n", seed)
 
 	w := simulation(WorldConfig{
-		rounds:     5,
-		peers:      1000,
-		mortality:  30,
-		payloads:   30,
-		gossipHeat: 4,
-		iteration:  i,
-		fail: WorldFailureRate{
-			active:      30,
-			shuffle:     30,
-			reply:       30,
-			gossip:      5,
-			gossipReply: 5,
-		},
+		rounds:      5,
+		peers:       1000,
+		mortality:   30,
+		payloads:    30,
+		gossipHeat:  4,
+		iteration:   i,
+		shuffleFreq: 10,
+		failureRate: 10,
 	})
 
 	assert.True(t, w.isConnected())
