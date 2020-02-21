@@ -16,22 +16,15 @@ type World struct {
 	gossipRound []*gossipRound
 }
 
-type WorldFailureRate struct {
-	active      int
-	shuffle     int
-	reply       int
-	gossip      int
-	gossipReply int
-}
-
 type WorldConfig struct {
-	rounds     int
-	peers      int
-	mortality  int
-	payloads   int
-	gossipHeat int
-	iteration  int // count rounds for plot filenames
-	fail       WorldFailureRate
+	rounds      int
+	peers       int
+	mortality   int
+	payloads    int
+	gossipHeat  int
+	iteration   int // count rounds for plot filenames
+	shuffleFreq int
+	failureRate int
 }
 
 func (w *World) get(id string) *Client {
@@ -56,22 +49,21 @@ func (w *World) randNodes() (ns []*Client) {
 	return ns
 }
 
+// TODO: maybe accept the message we're deciding for and do different things?
+func (w *World) shouldFail() bool {
+	return h.Rint(100) < w.config.failureRate
+}
+
+// Send the messages and all messages caused by them
 func (w *World) send(ms ...h.Message) {
-	w.totalMessages += len(ms)
-	w.queue = append(w.queue, ms...)
-}
-
-func (w *World) drainQueue() {
-	w.drain(w.queue)
-}
-
-// send all the messages in this slice
-func (w *World) drain(ms []h.Message) {
 	for _, m := range ms {
+		if w.shouldFail() {
+			continue
+		}
+
 		v := w.get(m.To().ID)
 		if v != nil {
-			ns := v.Recv(m)
-			w.drain(ns)
+			w.send(v.Recv(m)...)
 		}
 	}
 }
