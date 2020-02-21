@@ -11,7 +11,7 @@ func (w *World) plotPath(file string) string {
 	return fmt.Sprintf("../data/%04d-%s", w.config.iteration, file)
 }
 
-func (w *World) isConnected() bool {
+func (w *World) Connected() error {
 	lost := make(map[string]*Client, len(w.nodes))
 	for k, v := range w.nodes {
 		lost[k] = v
@@ -37,8 +37,7 @@ func (w *World) isConnected() bool {
 	}
 	lp(start)
 
-	fmt.Printf("%d connected, %d lost\n", len(w.nodes)-len(lost), len(lost))
-	return len(lost) == 0
+	return fmt.Errorf("%d connected, %d lost\n", len(w.nodes)-len(lost), len(lost))
 }
 
 func (w *World) plotSeed(seed int64) {

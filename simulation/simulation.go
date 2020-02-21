@@ -11,7 +11,6 @@ func simulation(c WorldConfig) *World {
 		config: &c,
 		nodes:  make(map[string]*Client, c.peers),
 		morgue: make(map[string]*Client),
-		queue:  make([]h.Message, 0),
 	}
 
 	// log.Printf("debug: make all the nodes")
@@ -22,20 +21,15 @@ func simulation(c WorldConfig) *World {
 
 	// log.Printf("debug: connect all the nodes")
 	for i := 0; i < c.peers; i++ {
-		ns := w.nodeKeys()
-		shuffle(ns)
-		root := w.get(ns[0])
-		ns = ns[1:]
+		ns := w.randNodes()
+		root := ns[0]
 
-		for _, id := range ns {
-			me := w.get(id)
+		for _, me := range ns[1:] {
 			ms := root.Recv(h.SendJoin(root.Self, me.Self))
 			w.send(ms...)
 		}
 
-		if i%c.shuffleFreq == 0 {
-			w.shuffleAll()
-		}
+		w.maybeShuffle()
 	}
 
 	// log.Printf("debug: send some gossip messages")
@@ -44,27 +38,24 @@ func simulation(c WorldConfig) *World {
 		node := ns[i] // client connects to a random node
 
 		// gossip drains all the hyparview messages and sends all the gossip
-		// messages before returning
+		// messages before returning. Also maintains the active view
 		node.gossip(i)
 
 		w.traceRound(i)
-
-		if i%c.shuffleFreq == 0 {
-			w.shuffleAll()
-		}
+		w.maybeShuffle()
 	}
 
 	return w
 }
 
-func (w *World) shuffleAll() {
-	ns := w.nodeKeys()
-	shuffle(ns)
-	for i := 1; i < len(ns); i++ {
-		me := w.get(ns[i-1])
-		thee := w.get(ns[i])
-		m := me.SendShuffle(thee.Self)
-		w.send(m)
+func (w *World) maybeShuffle() {
+	if w.totalMessages%w.config.shuffleFreq != 0 {
+		return
+	}
+
+	ns := w.randNodes()
+	for _, me := range ns {
+		w.send(me.SendShuffle(me.Peer()))
 	}
 }
 
@@ -77,6 +68,7 @@ func (w *World) repairEmptyActive() (ms []h.Message) {
 	return ms
 }
 
+/*
 func (w *World) debugQueue() {
 	fwd, ttl, disc, misc, shuf, shufr := 0, 0, 0, 0, 0, 0
 	for _, m := range w.queue {
@@ -103,3 +95,4 @@ func (w *World) debugQueue() {
 	fmt.Printf("FWD %d DISC %d MISC %d SHUF %d (TTL %d) SHUFR %d\n",
 		fwd, disc, misc, shuf, avg, shufr)
 }
+*/

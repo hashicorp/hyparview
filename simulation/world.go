@@ -8,7 +8,6 @@ type World struct {
 	config        *WorldConfig
 	nodes         map[string]*Client
 	morgue        map[string]*Client
-	queue         []h.Message
 	totalMessages int
 	totalPayloads int
 
@@ -56,6 +55,7 @@ func (w *World) shouldFail() bool {
 
 // Send the messages and all messages caused by them
 func (w *World) send(ms ...h.Message) {
+	w.totalMessages += len(ms)
 	for _, m := range ms {
 		if w.shouldFail() {
 			continue

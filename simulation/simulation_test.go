@@ -14,7 +14,7 @@ import (
 
 // TestSimulation is the test entry point
 func TestSimulation(t *testing.T) {
-	count := 3
+	count := 1
 	countEnv := os.Getenv("SIMULATION_COUNT")
 	if countEnv != "" {
 		conv, err := strconv.Atoi(countEnv)
@@ -42,13 +42,11 @@ func testSimulation(t *testing.T, i int) {
 		payloads:    30,
 		gossipHeat:  4,
 		iteration:   i,
-		shuffleFreq: 10,
+		shuffleFreq: 30,
 		failureRate: 10,
 	})
 
-	assert.True(t, w.isConnected())
-	w.isConnected()
-	assert.Equal(t, 0, len(w.queue))
+	assert.NoError(t, w.Connected())
 
 	// w.debugQueue()
 	w.plotSeed(seed)
