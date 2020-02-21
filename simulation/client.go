@@ -92,7 +92,7 @@ func (c *Client) recvGossip(m *gossip) bool {
 		if h.Rint(c.world.config.gossipHeat) > c.appHot {
 			continue
 		}
-		if shouldFail(c.world.config.fail.gossip) {
+		if c.world.shouldFail() {
 			continue
 		}
 
@@ -103,18 +103,18 @@ func (c *Client) recvGossip(m *gossip) bool {
 				return true
 			}
 
-			c.world.drain(c.failActive(nil))
+			c.world.send(c.failActive(nil)...)
 			continue
 		}
 
 		peer := c.world.get(node.ID)
-		if shouldFail(c.world.config.fail.active) {
-			c.world.drain(c.failActive(peer))
+		if c.world.shouldFail() {
+			c.world.send(c.failActive(peer)...)
 			continue
 		}
 
 		hot := peer.recvGossip(m)
-		if !hot || shouldFail(c.world.config.fail.gossipReply) {
+		if !hot || c.world.shouldFail() {
 			c.appHot -= 1
 		}
 	}
