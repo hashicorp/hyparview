@@ -5,6 +5,13 @@ type Node struct {
 	Addr string
 }
 
+func NewNode(addr string) *Node {
+	return &Node{
+		ID:   addr,
+		Addr: addr,
+	}
+}
+
 func (n *Node) Equal(m *Node) bool {
 	if n == nil || m == nil {
 		return n == m
