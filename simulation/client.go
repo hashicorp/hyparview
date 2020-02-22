@@ -39,6 +39,8 @@ func (c *Client) failActive(peer *Client) (ms []h.Message) {
 	for _, n := range c.Passive.Shuffled() {
 		if c.Active.IsEmpty() {
 			// High priority can't be rejected, so send async
+			// FIXME: this send may fail, we want to add to active only if it
+			// succeeds
 			ms = append(ms, h.SendNeighbor(n, c.Self, h.HighPriority))
 			break
 		} else {
@@ -47,7 +49,7 @@ func (c *Client) failActive(peer *Client) (ms []h.Message) {
 			peer := c.world.get(n.ID)
 			refuse := peer.RecvNeighbor(m)
 			// any low priority response is failure
-			if refuse != nil {
+			if len(refuse) > 0 {
 				c.DelPassive(n)
 				ms = append(ms, c.AddActive(n)...)
 				break
