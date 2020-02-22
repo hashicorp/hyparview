@@ -51,5 +51,6 @@ func testSimulation(t *testing.T, i int) {
 	// w.debugQueue()
 	w.plotSeed(seed)
 	w.plotInDegree()
+	w.plotOutDegree()
 	w.plotGossip()
 }
