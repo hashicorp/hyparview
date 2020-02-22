@@ -47,10 +47,7 @@ func CreateView(self *Node, n int) *Hyparview {
 
 // RecvJoin processes a Join following the paper
 func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
-	if v.Active.IsFull() {
-		ms = append(ms, v.DropRandActive()...)
-		v.DropRandActive()
-	}
+	ms = append(ms, v.AddActive(r.From)...)
 
 	// Forward to all active peers
 	for _, n := range v.Active.Nodes {
@@ -59,8 +56,6 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 		}
 		ms = append(ms, SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
 	}
-
-	v.Active.Add(r.From)
 
 	return ms
 }
@@ -94,7 +89,7 @@ func (v *Hyparview) DropRandActive() (ms []Message) {
 	idx := v.Active.RandIndex()
 	node := v.Active.GetIndex(idx)
 	v.Active.DelIndex(idx)
-	v.Passive.Add(node)
+	v.AddPassive(node)
 	ms = append(ms, SendDisconnect(node, v.Self))
 	return ms
 }
@@ -125,7 +120,7 @@ func (v *Hyparview) AddPassive(node *Node) {
 	}
 
 	if v.Passive.IsFull() {
-		i := Rint(v.Passive.Size() - 1)
+		i := v.Passive.RandIndex()
 		v.Passive.DelIndex(i)
 	}
 
@@ -238,7 +233,7 @@ func (v *Hyparview) addShuffle(n *Node) {
 		v.Passive.DelIndex(idx)
 	}
 
-	v.Passive.Add(n)
+	v.AddPassive(n)
 }
 
 func (v *Hyparview) RecvShuffleReply(r *ShuffleReply) {
@@ -263,7 +258,7 @@ func (v *Hyparview) Recv(m Message) (ms []Message) {
 	case *DisconnectRequest:
 		v.RecvDisconnect(m1)
 	case *NeighborRequest:
-		ms = append(ms, v.RecvNeighbor(m1))
+		ms = append(ms, v.RecvNeighbor(m1)...)
 	case *ShuffleRequest:
 		ms = append(ms, v.RecvShuffle(m1)...)
 	case *ShuffleReply:
