@@ -152,19 +152,18 @@ func (v *Hyparview) RecvDisconnect(r *DisconnectRequest) {
 
 // RecvNeighbor processes a neighbor, sent during failure recovery
 // Return at most one NeighborRefuse, which must be returned to the client
-func (v *Hyparview) RecvNeighbor(r *NeighborRequest) Message {
+func (v *Hyparview) RecvNeighbor(r *NeighborRequest) (ms []Message) {
 	node := r.From
 	priority := r.Priority
 	if v.Active.IsFull() && priority == LowPriority {
-		return SendNeighborRefuse(node, v.Self)
+		ms = append(ms, SendNeighborRefuse(node, v.Self))
+		return ms
 	}
 	idx := v.Passive.ContainsIndex(node)
 	if idx >= 0 {
 		v.Passive.DelIndex(idx)
 	}
-	v.AddActive(node)
-
-	return nil
+	return v.AddActive(node)
 }
 
 // SendShuffle creates the periodic state to mark and message for maintaining the passive
