@@ -22,10 +22,12 @@ func simulation(c WorldConfig) *World {
 	// log.Printf("debug: connect all the nodes")
 	for i := 0; i < c.peers; i++ {
 		ns := w.randNodes()
-		root := ns[0]
+		// boots := w.randNodes()
+		boot := ns[0]
 
 		for _, me := range ns[1:] {
-			ms := root.Recv(h.SendJoin(root.Self, me.Self))
+			// boot := boots[i]
+			ms := boot.Recv(h.SendJoin(boot.Self, me.Self))
 			w.send(ms...)
 		}
 
