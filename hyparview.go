@@ -69,7 +69,7 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 
 // RecvForwardJoin processes a ForwardJoin following the paper
 func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
-	if r.TTL == 0 || v.Active.IsEmptyBut(r.From) {
+	if r.TTL == 0 || !v.Active.IsFull() {
 		ms = append(ms, v.AddActive(r.Join)...)
 		ms = append(ms, SendNeighbor(r.Join, v.Self, HighPriority))
 		return ms
