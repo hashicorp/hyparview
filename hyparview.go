@@ -1,5 +1,7 @@
 package hyparview
 
+import "log"
+
 // import "fmt"
 
 type ConfigRandomWalkLength struct {
@@ -45,8 +47,17 @@ func CreateView(self *Node, n int) *Hyparview {
 	}
 }
 
+func (v *Hyparview) SendJoin(peer *Node) (ms []Message) {
+	log.Printf("joins: %s => %s", v.Self.Addr, peer.Addr)
+	// Usually on run at bootstrap, where this will never produce disconnect messages
+	ms = append(ms, v.AddActive(peer)...)
+	ms = append(ms, SendJoin(peer, v.Self))
+	return ms
+}
+
 // RecvJoin processes a Join following the paper
 func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
+	log.Printf("joinr: %s => %s", r.From.Addr, v.Self.Addr)
 	ms = append(ms, v.AddActive(r.From)...)
 
 	// Forward to all active peers
@@ -63,7 +74,9 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 // RecvForwardJoin processes a ForwardJoin following the paper
 func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 	if r.TTL == 0 || v.Active.IsEmpty() {
+		log.Printf("fwdjoins: %s => %s", v.Self.Addr, r.Join.Addr)
 		ms = append(ms, v.AddActive(r.Join)...)
+		ms = append(ms, SendNeighbor(r.Join, v.Self, HighPriority))
 		return ms
 	}
 
@@ -88,6 +101,9 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 func (v *Hyparview) DropRandActive() (ms []Message) {
 	idx := v.Active.RandIndex()
 	node := v.Active.GetIndex(idx)
+
+	log.Printf("drops: %s => %s", v.Self.Addr, node.Addr)
+
 	v.Active.DelIndex(idx)
 	v.AddPassive(node)
 	ms = append(ms, SendDisconnect(node, v.Self))
@@ -140,6 +156,9 @@ func (v *Hyparview) RecvDisconnect(r *DisconnectRequest) {
 	node := r.From
 	idx := v.Active.ContainsIndex(node)
 	if idx >= 0 {
+
+		log.Printf("dropr: %s => %s", node.Addr, v.Self.Addr)
+
 		v.Active.DelIndex(idx)
 		v.AddPassive(node)
 	}
@@ -158,6 +177,8 @@ func (v *Hyparview) RecvNeighbor(r *NeighborRequest) (ms []Message) {
 	if idx >= 0 {
 		v.Passive.DelIndex(idx)
 	}
+
+	log.Printf("fwdjoinr: %s => %s", node.Addr, v.Self.Addr)
 	return v.AddActive(node)
 }
 
