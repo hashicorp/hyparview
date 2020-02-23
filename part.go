@@ -16,6 +16,10 @@ func (v *ViewPart) IsEmpty() bool {
 	return len(v.Nodes) == 0
 }
 
+func (v *ViewPart) IsEmptyBut(peer *Node) bool {
+	return len(v.Nodes) == 1 && peer.Equal(v.Nodes[0])
+}
+
 func (v *ViewPart) IsFull() bool {
 	return len(v.Nodes) >= v.Max
 }
