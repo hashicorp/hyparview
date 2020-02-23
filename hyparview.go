@@ -69,7 +69,7 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 
 // RecvForwardJoin processes a ForwardJoin following the paper
 func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
-	if r.TTL == 0 || v.Active.IsEmpty() {
+	if r.TTL == 0 || v.Active.IsEmptyBut(r.From) {
 		ms = append(ms, v.AddActive(r.Join)...)
 		ms = append(ms, SendNeighbor(r.Join, v.Self, HighPriority))
 		return ms
@@ -181,7 +181,9 @@ func (v *Hyparview) SendShuffle(node *Node) *ShuffleRequest {
 
 // RecvShuffle processes a shuffle request. Paper
 func (v *Hyparview) RecvShuffle(r *ShuffleRequest) (ms []Message) {
-	if r.TTL >= 0 && !v.Active.IsEmpty() { // FIXME this may be 1
+	// If the active view size is one, it means that our only active peer is sender of
+	// this shuffle message
+	if r.TTL >= 0 && !v.Active.IsEmptyBut(r.From) {
 		// Forward to one active non-sender
 		for _, n := range v.Active.Shuffled() {
 			if n.Equal(r.From) {
