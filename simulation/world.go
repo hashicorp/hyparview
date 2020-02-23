@@ -13,6 +13,8 @@ type World struct {
 
 	gossipTotal *gossipRound
 	gossipRound []*gossipRound
+
+	symmetry map[string]h.Message
 }
 
 type WorldConfig struct {
@@ -53,17 +55,44 @@ func (w *World) shouldFail() bool {
 	return h.Rint(100) < w.config.failureRate
 }
 
+func (w *World) symCheck(m h.Message) {
+	var check := false
+
+	switch m1 := m.(type) {
+	// case *h.JoinRequest:
+	// 	k := m1.From.ID + "-" + m.To().ID
+	// 	w.symmetry[k] = m1
+	// case *h.ForwardJoinRequest:
+	// 	k := m1.From.ID + "-" + m1.Join.ID
+	// 	// We only see these when they changed the active view
+	// 	w.symmetry[k] = m1
+	case *h.DisconnectRequest:
+		check = true
+	case *h.NeighborRequest:
+		check = true
+	default:
+		// log unimplemented?
+	}
+}
+
 // Send the messages and all messages caused by them
 func (w *World) send(ms ...h.Message) {
 	w.totalMessages += len(ms)
 	for _, m := range ms {
+		// pretty.Log("send", m)
 		if w.shouldFail() {
 			continue
 		}
 
 		v := w.get(m.To().ID)
 		if v != nil {
+			pre := v.Active.Copy()
+
 			w.send(v.Recv(m)...)
+
+			if !v.Active.Equal(pre) {
+				w.symCheck(m)
+			}
 		}
 	}
 }
