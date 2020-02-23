@@ -59,6 +59,7 @@ type NeighborRequest struct {
 	to       *Node
 	From     *Node
 	Priority bool
+	Join     bool
 }
 
 func (r *NeighborRequest) To() *Node { return r.to }
@@ -68,6 +69,15 @@ func SendNeighbor(to *Node, from *Node, priority bool) *NeighborRequest {
 		to:       to,
 		From:     from,
 		Priority: priority,
+	}
+}
+
+func SendNeighborJoin(to *Node, from *Node) *NeighborRequest {
+	return &NeighborRequest{
+		to:       to,
+		From:     from,
+		Priority: HighPriority,
+		Join:     true,
 	}
 }
 
