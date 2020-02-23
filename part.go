@@ -36,6 +36,25 @@ func (v *ViewPart) Copy() *ViewPart {
 	return &w
 }
 
+func (v *ViewPart) Equal(w *ViewPart) bool {
+	if w == nil {
+		return v == w
+	}
+	if v.Size() != w.Size() {
+		return false
+	}
+setwise:
+	for _, n := range v.Nodes {
+		for _, m := range w.Nodes {
+			if n.Equal(m) {
+				continue setwise
+			}
+		}
+		return false
+	}
+	return true
+}
+
 func (v *ViewPart) Add(n *Node) {
 	if !v.Contains(n) {
 		v.Nodes = append(v.Nodes, n)
