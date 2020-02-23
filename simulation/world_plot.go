@@ -37,6 +37,10 @@ func (w *World) Connected() error {
 	}
 	lp(start)
 
+	if len(lost) == 0 {
+		return nil
+	}
+
 	return fmt.Errorf("%d connected, %d lost\n", len(w.nodes)-len(lost), len(lost))
 }
 
