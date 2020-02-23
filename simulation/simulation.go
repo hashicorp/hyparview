@@ -2,8 +2,6 @@ package simulation
 
 import (
 	"fmt"
-
-	h "github.com/hashicorp/hyparview"
 )
 
 func simulation(c WorldConfig) *World {
@@ -22,14 +20,12 @@ func simulation(c WorldConfig) *World {
 	// log.Printf("debug: connect all the nodes")
 	for i := 0; i < c.peers; i++ {
 		ns := w.randNodes()
-		// boots := w.randNodes()
-		boot := ns[0]
+		boots := w.randNodes()
+		// boot := ns[0]
 
 		for _, me := range ns[1:] {
-			// boot := boots[i]
-			me.AddActive(boot.Self)
-			ms := boot.Recv(h.SendJoin(boot.Self, me.Self))
-			w.send(ms...)
+			boot := boots[i]
+			w.send(me.SendJoin(boot.Self)...)
 		}
 
 		w.maybeShuffle()
