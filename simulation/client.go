@@ -31,6 +31,15 @@ func (c *Client) messages() []h.Message {
 	return out
 }
 
+func (c *Client) getPeer() (*h.Node, []h.Message) {
+	p := c.Peer()
+	if p != nil {
+		return p, nil
+	}
+	ms := c.failActive(nil)
+	return c.Peer(), ms
+}
+
 func (c *Client) failActive(peer *Client) (ms []h.Message) {
 	if peer != nil {
 		c.Active.DelNode(peer.Self)
