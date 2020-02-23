@@ -27,6 +27,7 @@ func simulation(c WorldConfig) *World {
 
 		for _, me := range ns[1:] {
 			// boot := boots[i]
+			me.AddActive(boot.Self)
 			ms := boot.Recv(h.SendJoin(boot.Self, me.Self))
 			w.send(ms...)
 		}
@@ -57,44 +58,10 @@ func (w *World) maybeShuffle() {
 
 	ns := w.randNodes()
 	for _, me := range ns {
-		w.send(me.SendShuffle(me.Peer()))
-	}
-}
-
-func (w *World) repairEmptyActive() (ms []h.Message) {
-	for _, n := range w.nodes {
-		if n.Active.IsEmpty() {
-			return n.failActive(nil)
+		p, ms := me.getPeer()
+		w.send(ms...)
+		if p != nil {
+			w.send(me.SendShuffle(p))
 		}
 	}
-	return ms
 }
-
-/*
-func (w *World) debugQueue() {
-	fwd, ttl, disc, misc, shuf, shufr := 0, 0, 0, 0, 0, 0
-	for _, m := range w.queue {
-		switch r := m.(type) {
-		case *h.ForwardJoinRequest:
-			fwd++
-		case *h.DisconnectRequest:
-			disc++
-		case *h.ShuffleRequest:
-			shuf++
-			ttl += r.TTL
-		case *h.ShuffleReply:
-			shufr++
-		default:
-			misc++
-		}
-	}
-
-	avg := 0
-	if shuf > 0 {
-		avg = ttl / shuf
-	}
-
-	fmt.Printf("FWD %d DISC %d MISC %d SHUF %d (TTL %d) SHUFR %d\n",
-		fwd, disc, misc, shuf, avg, shufr)
-}
-*/
