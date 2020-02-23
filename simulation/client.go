@@ -1,6 +1,8 @@
 package simulation
 
 import (
+	"log"
+
 	h "github.com/hashicorp/hyparview"
 )
 
@@ -58,8 +60,9 @@ func (c *Client) failActive(peer *Client) (ms []h.Message) {
 			peer := c.world.get(n.ID)
 			refuse := peer.RecvNeighbor(m)
 			// any low priority response is failure
-			if len(refuse) > 0 {
+			if len(refuse) == 0 {
 				c.DelPassive(n)
+				log.Printf("faila %s => %s", c.Self.Addr, peer.Self.Addr)
 				ms = append(ms, c.AddActive(n)...)
 				break
 			}
