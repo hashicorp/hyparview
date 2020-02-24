@@ -69,7 +69,7 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 
 // RecvForwardJoin processes a ForwardJoin following the paper
 func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
-	// if r.TTL == 0 || !v.Active.IsFull() &&
+	// if r.TTL == 0 || !v.Active.IsFull() {
 	if r.TTL == 0 || v.Active.Size() <= 1 {
 		if r.Join.Equal(v.Self) || v.Active.Contains(r.Join) {
 			return ms
