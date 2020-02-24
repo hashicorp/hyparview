@@ -57,15 +57,25 @@ func (w *World) randNodes() (ns []*Client) {
 
 // TODO: maybe accept the message we're deciding for and do different things?
 func (w *World) shouldFail() bool {
-	return h.Rint(100) < w.config.failureRate
+	return false
 }
 
 func (w *World) symCheck(m h.Message) {
-	if w.spinCountM == nil {
-		w.spinCountM = map[string]int{}
-	}
+	// if w.spinCountM == nil {
+	// 	w.spinCountM = map[string]int{}
+	// }
+
+	// n := w.get(m.FromNode().ID)
+	// p := w.get(m.To().ID)
+	// if n.Active.Contains(p.Self) != p.Active.Contains(n.Self) {
+	// 	pretty.Log("asymmetric", m)
+	// }
+	// return
 
 	switch m1 := m.(type) {
+	// case *h.JoinRequest:
+	// 	fmt.Printf("%s %s\n", m1.To().ID, m1.From.ID)
+
 	case *h.ForwardJoinRequest:
 		if w.spinCount >= 1000000 {
 			w.spinCount = 0
@@ -104,14 +114,19 @@ func (w *World) symCheck(m h.Message) {
 			log.Printf("nei %s %s", m1.From.ID, m1.To().ID)
 		}
 	default:
-		w.spinCountM[fmt.Sprintf("%T", m1)] += 1
-		if h.Rint(100000) == 1 {
-			var ss []string
-			for k, v := range w.spinCountM {
-				ss = append(ss, fmt.Sprintf("%s:%d", k, v))
-			}
-			log.Println(strings.Join(ss, " "))
+	}
+
+	// w.spinCountM[fmt.Sprintf("%T", m)] += 1
+	// w.spinPrint()
+}
+
+func (w *World) spinPrint() {
+	if h.Rint(100000) == 1 {
+		var ss []string
+		for k, v := range w.spinCountM {
+			ss = append(ss, fmt.Sprintf("%s:%d", k, v))
 		}
+		log.Println(strings.Join(ss, " "))
 	}
 }
 
@@ -119,17 +134,16 @@ func (w *World) symCheck(m h.Message) {
 func (w *World) send(ms ...h.Message) {
 	w.totalMessages += len(ms)
 	for _, m := range ms {
-		// pretty.Log("send", m)
 		if w.shouldFail() {
 			continue
 		}
 
 		v := w.get(m.To().ID)
 		if v != nil {
-			ms := v.Recv(m)
+			mms := v.Recv(m)
 			// Check after delivery
 			w.symCheck(m)
-			w.send(ms...)
+			w.send(mms...)
 			// fmt.Printf("%T\n", m)
 		}
 	}

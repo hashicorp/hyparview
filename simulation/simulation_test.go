@@ -24,8 +24,7 @@ func TestSimulation(t *testing.T) {
 	}
 
 	for i := 1; i <= count; i++ {
-		// 200 fails, 600 loops
-		testSimulation(t, i, 200)
+		testSimulation(t, i, 10000)
 	}
 }
 
@@ -37,14 +36,12 @@ func testSimulation(t *testing.T, i int, peers int) {
 	fmt.Printf("Seed %d\n", seed)
 
 	w := simulation(WorldConfig{
-		rounds:      5,
 		peers:       peers,
-		mortality:   30,
-		payloads:    1,
+		payloads:    30,
 		gossipHeat:  4,
 		iteration:   i,
 		shuffleFreq: 30,
-		failureRate: 10,
+		failureRate: 0,
 	})
 
 	assert.NoError(t, w.Connected())
