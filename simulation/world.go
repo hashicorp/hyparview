@@ -4,6 +4,7 @@ import (
 	"log"
 
 	h "github.com/hashicorp/hyparview"
+	"github.com/kr/pretty"
 )
 
 type World struct {
@@ -58,6 +59,8 @@ func (w *World) shouldFail() bool {
 }
 
 func (w *World) symCheck(m h.Message) {
+	first := true
+
 	switch m1 := m.(type) {
 	case *h.DisconnectRequest:
 		if m1.From.ID == m1.To().ID {
@@ -65,8 +68,17 @@ func (w *World) symCheck(m h.Message) {
 		}
 		n := w.get(m1.From.ID)
 		m := w.get(m.To().ID)
-		if n.Active.Contains(m.Self) || m.Active.Contains(n.Self) {
-			log.Printf("dis %s %s", m1.From.ID, m1.To().ID)
+		if n.Active.Contains(m.Self) {
+			log.Printf("diss %s %s", m1.From.ID, m1.To().ID)
+
+			if first {
+				first = false
+				pretty.Log(n.Active.Nodes, m.Self)
+			}
+		}
+
+		if m.Active.Contains(n.Self) {
+			log.Printf("disr %s %s", m1.From.ID, m1.To().ID)
 		}
 
 	case *h.NeighborRequest:
@@ -97,6 +109,7 @@ func (w *World) send(ms ...h.Message) {
 			// Check after delivery
 			w.symCheck(m)
 			w.send(ms...)
+			// fmt.Printf("%T\n", m)
 		}
 	}
 }
