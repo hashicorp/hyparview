@@ -2,13 +2,16 @@ package simulation
 
 import (
 	"fmt"
+
+	h "github.com/hashicorp/hyparview"
 )
 
 func simulation(c WorldConfig) *World {
 	w := &World{
-		config: &c,
-		nodes:  make(map[string]*Client, c.peers),
-		morgue: make(map[string]*Client),
+		config:   &c,
+		nodes:    make(map[string]*Client, c.peers),
+		morgue:   make(map[string]*Client),
+		symmetry: make(map[string]h.Message),
 	}
 
 	// log.Printf("debug: make all the nodes")
@@ -20,11 +23,11 @@ func simulation(c WorldConfig) *World {
 	// log.Printf("debug: connect all the nodes")
 	for i := 0; i < c.peers; i++ {
 		ns := w.randNodes()
-		boots := w.randNodes()
+		// boots := w.randNodes()
 		// boot := ns[0]
 
-		for _, me := range ns[1:] {
-			boot := boots[i]
+		for i, me := range ns[1:] {
+			boot := w.nodes[fmt.Sprintf("n%d", h.Rint(i))]
 			w.send(me.SendJoin(boot.Self)...)
 		}
 
