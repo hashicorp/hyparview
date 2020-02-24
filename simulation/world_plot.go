@@ -45,14 +45,19 @@ func (w *World) Connected() error {
 }
 
 func (w *World) isSymmetric() error {
+	count := 0
 	for _, n := range w.nodes {
 		for _, p := range n.Active.Shuffled() {
 			if !w.get(p.ID).Active.Contains(n.Self) {
-				return fmt.Errorf("asymmetric: %s not in %s", n.Self.ID, p.ID)
+				count++
 			}
 		}
 	}
-	return nil
+
+	if count == 0 {
+		return nil
+	}
+	return fmt.Errorf("asymmetric: %d", count)
 }
 
 func (w *World) plotSeed(seed int64) {
