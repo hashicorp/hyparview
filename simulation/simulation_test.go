@@ -24,21 +24,21 @@ func TestSimulation(t *testing.T) {
 	}
 
 	for i := 1; i <= count; i++ {
-		testSimulation(t, i)
+		// 200 fails, 600 loops
+		testSimulation(t, i, 200)
 	}
 }
 
 // testSimulation is the entry point to test a single world
 // World configuration and assertion goes here
-func testSimulation(t *testing.T, i int) {
+func testSimulation(t *testing.T, i int, peers int) {
 	seed := h.Rint64Crypto(math.MaxInt64 - 1)
-	// seed := int64(1757584190383798929)
 	rand.Seed(seed)
 	fmt.Printf("Seed %d\n", seed)
 
 	w := simulation(WorldConfig{
 		rounds:      5,
-		peers:       1000,
+		peers:       peers,
 		mortality:   30,
 		payloads:    1,
 		gossipHeat:  4,
