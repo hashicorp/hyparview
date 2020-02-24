@@ -18,4 +18,15 @@ func TestContains(t *testing.T) {
 
 	v.DelIndex(1)
 	require.False(t, v.Contains(n))
+
+	v.Add(NewNode("c"))
+	n = NewNode("d")
+	v.Add(n)
+	v.Add(NewNode("e"))
+
+	v.DelNode(n)
+
+	require.Equal(t, "a", v.Nodes[0].ID)
+	require.Equal(t, "c", v.Nodes[1].ID)
+	require.Equal(t, "e", v.Nodes[2].ID)
 }
