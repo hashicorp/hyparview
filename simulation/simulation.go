@@ -2,8 +2,6 @@ package simulation
 
 import (
 	"fmt"
-
-	h "github.com/hashicorp/hyparview"
 )
 
 func simulation(c WorldConfig) *World {
@@ -20,27 +18,21 @@ func simulation(c WorldConfig) *World {
 	}
 
 	// log.Printf("debug: connect all the nodes")
-	for i := 0; i < c.peers; i++ {
-		ns := w.randNodes()
-		// boots := w.randNodes()
-		// boot := ns[0]
-
-		for i, me := range ns[1:] {
-			boot := w.nodes[fmt.Sprintf("n%d", h.Rint(i))]
-			w.send(me.SendJoin(boot.Self)...)
-		}
-
+	ns := w.randNodes()
+	boot := ns[0]
+	for _, me := range ns[1:] {
+		// boot := w.nodes[fmt.Sprintf("n%d", h.Rint(i))]
+		w.send(me.SendJoin(boot.Self)...)
 		w.maybeShuffle()
 	}
 
 	// log.Printf("debug: send some gossip messages")
-	ns := w.randNodes()
+	ns = w.randNodes()
 	for i := 1; i < c.payloads+1; i++ {
-		node := ns[i] // client connects to a random node
-
 		// gossip drains all the hyparview messages and sends all the gossip
 		// messages before returning. Also maintains the active view
-		node.gossip(i)
+		// node := ns[i] // client connects to a random node
+		// node.gossip(i)
 
 		w.traceRound(i)
 		w.maybeShuffle()

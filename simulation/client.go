@@ -128,6 +128,9 @@ func (c *Client) recvGossip(m *gossip) bool {
 		if !hot || c.world.shouldFail() {
 			c.appHot -= 1
 		}
+
+		c.world.spinCountM["gossip"] += 1
+		c.world.spinPrint()
 	}
 	return true
 }
