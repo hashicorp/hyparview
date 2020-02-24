@@ -61,3 +61,37 @@ func TestViewMaxAdd(t *testing.T) {
 	v.AddPassive(NewNode("e"))
 	require.Equal(t, 3, v.Passive.Size())
 }
+
+func TestDisconnect(t *testing.T) {
+	v := CreateView(NewNode("self"), 0)
+	n := NewNode("a")
+	v.AddActive(n)
+	v.RecvDisconnect(SendDisconnect(v.Self, n))
+	require.False(t, v.Active.Contains(n))
+	require.True(t, v.Passive.Contains(n))
+}
+
+func TestRecvForwardJoin(t *testing.T) {
+	v := CreateView(NewNode("self"), 0)
+	a := NewNode("a")
+	b := NewNode("b")
+	c := NewNode("c")
+
+	v.AddActive(a)
+	m := SendForwardJoin(v.Self, b, a, 6)
+	ms := v.RecvForwardJoin(m)
+	require.Equal(t, 0, len(ms))
+
+	m = SendForwardJoin(v.Self, a, b, 6)
+	ms = v.RecvForwardJoin(m)
+	require.Equal(t, 1, len(ms))
+	_, ok := ms[0].(*NeighborRequest)
+	require.True(t, ok)
+
+	m = SendForwardJoin(v.Self, a, c, 6)
+	ms = v.RecvForwardJoin(m)
+	require.Equal(t, 1, len(ms))
+	fwd, ok := ms[0].(*ForwardJoinRequest)
+	require.True(t, ok)
+	require.Equal(t, 5, fwd.TTL)
+}

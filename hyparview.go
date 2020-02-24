@@ -69,7 +69,12 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) (ms []Message) {
 
 // RecvForwardJoin processes a ForwardJoin following the paper
 func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
-	if r.TTL == 0 || !v.Active.IsFull() {
+	// if r.TTL == 0 || !v.Active.IsFull() &&
+	if r.TTL == 0 || v.Active.Size() <= 1 {
+		if r.Join.Equal(v.Self) || v.Active.Contains(r.Join) {
+			return ms
+		}
+
 		ms = append(ms, v.AddActive(r.Join)...)
 		ms = append(ms, SendNeighborJoin(r.Join, v.Self))
 		return ms
@@ -81,7 +86,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) (ms []Message) {
 
 	// Forward to one not-sender active peer
 	for _, n := range v.Active.Shuffled() {
-		if n.Equal(r.From) {
+		if n.Equal(r.Join) {
 			continue
 		}
 		ms = append(ms, SendForwardJoin(n, v.Self, r.Join, r.TTL-1))
@@ -105,7 +110,7 @@ func (v *Hyparview) DropRandActive() (ms []Message) {
 // AddActive adds a node to the active view, possibly dropping an active peer to make room.
 // Paper
 func (v *Hyparview) AddActive(node *Node) (ms []Message) {
-	if node.Equal(v.Self) {
+	if node.Equal(v.Self) || v.Active.Contains(node) {
 		return
 	}
 
@@ -145,11 +150,10 @@ func (v *Hyparview) DelPassive(node *Node) {
 
 // RecvDisconnect processes a disconnect, demoting the sender to the passive view
 func (v *Hyparview) RecvDisconnect(r *DisconnectRequest) {
-	node := r.From
-	idx := v.Active.ContainsIndex(node)
+	idx := v.Active.ContainsIndex(r.From)
 	if idx >= 0 {
 		v.Active.DelIndex(idx)
-		v.AddPassive(node)
+		v.AddPassive(r.From)
 	}
 }
 
