@@ -8,10 +8,9 @@ import (
 
 func simulation(c WorldConfig) *World {
 	w := &World{
-		config:   &c,
-		nodes:    make(map[string]*Client, c.peers),
-		morgue:   make(map[string]*Client),
-		symmetry: make(map[string]h.Message),
+		config: &c,
+		nodes:  make(map[string]*Client, c.peers),
+		morgue: make(map[string]*Client),
 	}
 
 	// log.Printf("debug: make all the nodes")

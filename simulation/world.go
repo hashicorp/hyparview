@@ -1,7 +1,9 @@
 package simulation
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
 	h "github.com/hashicorp/hyparview"
 )
@@ -16,7 +18,8 @@ type World struct {
 	gossipTotal *gossipRound
 	gossipRound []*gossipRound
 
-	symmetry map[string]h.Message
+	spinCount  int
+	spinCountM map[string]int
 }
 
 type WorldConfig struct {
@@ -58,10 +61,28 @@ func (w *World) shouldFail() bool {
 }
 
 func (w *World) symCheck(m h.Message) {
+	if w.spinCountM == nil {
+		w.spinCountM = map[string]int{}
+	}
+
 	switch m1 := m.(type) {
+	case *h.ForwardJoinRequest:
+		if w.spinCount >= 1000000 {
+			w.spinCount = 0
+			log.Printf("fwd  1m %s %d", m1.Join.ID, m1.TTL)
+		} else {
+			w.spinCount += 1
+		}
+		if m1.From.ID == m1.To().ID {
+			log.Printf("fwd  dup")
+		}
+		if m1.TTL < 0 {
+			log.Printf("fwd  ttl0")
+		}
+
 	case *h.DisconnectRequest:
 		if m1.From.ID == m1.To().ID {
-			return
+			log.Printf("diss dup")
 		}
 		n := w.get(m1.From.ID)
 		m := w.get(m.To().ID)
@@ -83,6 +104,14 @@ func (w *World) symCheck(m h.Message) {
 			log.Printf("nei %s %s", m1.From.ID, m1.To().ID)
 		}
 	default:
+		w.spinCountM[fmt.Sprintf("%T", m1)] += 1
+		if h.Rint(100000) == 1 {
+			var ss []string
+			for k, v := range w.spinCountM {
+				ss = append(ss, fmt.Sprintf("%s:%d", k, v))
+			}
+			log.Println(strings.Join(ss, " "))
+		}
 	}
 }
 
