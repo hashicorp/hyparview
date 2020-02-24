@@ -1,6 +1,8 @@
 package simulation
 
 import (
+	"log"
+
 	h "github.com/hashicorp/hyparview"
 )
 
@@ -56,22 +58,27 @@ func (w *World) shouldFail() bool {
 }
 
 func (w *World) symCheck(m h.Message) {
-	var check := false
-
 	switch m1 := m.(type) {
-	// case *h.JoinRequest:
-	// 	k := m1.From.ID + "-" + m.To().ID
-	// 	w.symmetry[k] = m1
-	// case *h.ForwardJoinRequest:
-	// 	k := m1.From.ID + "-" + m1.Join.ID
-	// 	// We only see these when they changed the active view
-	// 	w.symmetry[k] = m1
 	case *h.DisconnectRequest:
-		check = true
+		if m1.From.ID == m1.To().ID {
+			return
+		}
+		n := w.get(m1.From.ID)
+		m := w.get(m.To().ID)
+		if n.Active.Contains(m.Self) || m.Active.Contains(n.Self) {
+			log.Printf("dis %s %s", m1.From.ID, m1.To().ID)
+		}
+
 	case *h.NeighborRequest:
-		check = true
+		if !m1.Join || m1.From.ID == m1.To().ID {
+			return
+		}
+		n := w.get(m1.From.ID)
+		m := w.get(m.To().ID)
+		if !(n.Active.Contains(m.Self) && m.Active.Contains(n.Self)) {
+			log.Printf("nei %s %s", m1.From.ID, m1.To().ID)
+		}
 	default:
-		// log unimplemented?
 	}
 }
 
@@ -86,13 +93,10 @@ func (w *World) send(ms ...h.Message) {
 
 		v := w.get(m.To().ID)
 		if v != nil {
-			pre := v.Active.Copy()
-
-			w.send(v.Recv(m)...)
-
-			if !v.Active.Equal(pre) {
-				w.symCheck(m)
-			}
+			ms := v.Recv(m)
+			// Check after delivery
+			w.symCheck(m)
+			w.send(ms...)
 		}
 	}
 }
