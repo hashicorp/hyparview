@@ -32,6 +32,7 @@ func TestSimulation(t *testing.T) {
 // World configuration and assertion goes here
 func testSimulation(t *testing.T, i int) {
 	seed := h.Rint64Crypto(math.MaxInt64 - 1)
+	// seed := int64(1757584190383798929)
 	rand.Seed(seed)
 	fmt.Printf("Seed %d\n", seed)
 
@@ -39,7 +40,7 @@ func testSimulation(t *testing.T, i int) {
 		rounds:      5,
 		peers:       1000,
 		mortality:   30,
-		payloads:    30,
+		payloads:    1,
 		gossipHeat:  4,
 		iteration:   i,
 		shuffleFreq: 30,
@@ -47,6 +48,10 @@ func testSimulation(t *testing.T, i int) {
 	})
 
 	assert.NoError(t, w.Connected())
+	err := w.isSymmetric()
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	// w.debugQueue()
 	w.plotSeed(seed)
