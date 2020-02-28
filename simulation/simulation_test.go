@@ -34,20 +34,20 @@ func testSimulation(t *testing.T, i int, peers int) {
 	w := simulation(WorldConfig{
 		peers:       peers,
 		payloads:    30,
-		gossipHeat:  4,
 		iteration:   i,
 		shuffleFreq: 30,
 		failureRate: 0,
+		rounds:      40,
 	})
 
 	err := w.Connected()
 	if err != nil {
-		t.Fail("graph disconnected: %s", err.Error())
+		t.Errorf("run %d: graph disconnected: %s", i, err.Error())
 	}
 
 	err = w.isSymmetric()
 	if err != nil {
-		t.Fail("active view asymmetric: %s", err.Error())
+		t.Errorf("run %d: active view asymmetric: %s", i, err.Error())
 	}
 
 	// w.debugQueue()

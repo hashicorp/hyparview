@@ -27,7 +27,6 @@ type WorldConfig struct {
 	peers       int
 	mortality   int
 	payloads    int
-	gossipHeat  int
 	iteration   int // count rounds for plot filenames
 	shuffleFreq int
 	failureRate int
@@ -60,6 +59,7 @@ func (w *World) shouldFail() bool {
 	return false
 }
 
+// symCheck is an adhoc debugging tool
 func (w *World) symCheck(m h.Message) {
 	// if w.spinCountM == nil {
 	// 	w.spinCountM = map[string]int{}
@@ -134,17 +134,11 @@ func (w *World) spinPrint() {
 func (w *World) send(ms ...h.Message) {
 	w.totalMessages += len(ms)
 	for _, m := range ms {
-		if w.shouldFail() {
-			continue
-		}
-
 		v := w.get(m.To().ID)
 		if v != nil {
 			mms := v.Recv(m)
-			// Check after delivery
-			w.symCheck(m)
+			// w.symCheck(m)
 			w.send(mms...)
-			// fmt.Printf("%T\n", m)
 		}
 	}
 }
