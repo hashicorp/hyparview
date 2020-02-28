@@ -49,7 +49,7 @@ func (c *Client) failActive(peer *Client) (ms []h.Message) {
 	for _, n := range c.Passive.Shuffled() {
 		// Failure always removes the node from our passive view
 		if c.world.shouldFail() {
-			c.DelPassive()
+			c.DelPassive(n)
 			continue
 		}
 
@@ -61,8 +61,8 @@ func (c *Client) failActive(peer *Client) (ms []h.Message) {
 		resp := peer.RecvNeighbor(m)
 
 		if pri == h.HighPriority {
-			c.AddActive(peer)
-			c.DelPassive(peer)
+			c.AddActive(n)
+			c.DelPassive(n)
 			return resp
 		}
 
@@ -72,50 +72,8 @@ func (c *Client) failActive(peer *Client) (ms []h.Message) {
 		}
 
 		// we don't need to return AddActive because we certainly have an empty slot
-		c.AddActive(peer)
-		c.DelPassive(peer)
-	}
-
-	return ms
-}
-
-type gossip struct {
-	to   *h.Node
-	from *h.Node
-	app  int
-	hops int
-}
-
-// gossip is an h.Message
-func (g *gossip) To() *h.Node {
-	return g.to
-}
-
-func (c *Client) gossip(i int) {
-	c.recvGossip(&gossip{to: c.Self, app: i, hops: 0})
-}
-
-// Example gossip implementation. For deterministic testing, each payload runs until the
-// message is completely distributed.
-func (c *Client) recvGossip(m *gossip) (ms []*gossip) {
-	if c.app >= m.app {
-		c.appWaste += 1
-		return ms
-	}
-	c.app = m.app
-	c.appHops = m.hops
-	c.appSeen += 1
-
-	for _, peer := range c.Active.Nodes {
-		if peer.Equal(m.from) {
-			continue
-		}
-
-		if c.world.shouldFail() {
-			ms = append(ms, c.failActive(peer)...)
-		}
-
-		ms = append(ms, &gossip{from: c.Self, app: m.app, hops: m.hops + 1})
+		c.AddActive(n)
+		c.DelPassive(n)
 	}
 
 	return ms
