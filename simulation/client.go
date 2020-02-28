@@ -39,31 +39,41 @@ func (c *Client) getPeer() (*h.Node, []h.Message) {
 	return c.Peer(), ms
 }
 
+// failActive cheats the implementation: it delivers messages synchronously directly, and
+// therefore avoids the awkward mismatch on returning the messages
 func (c *Client) failActive(peer *Client) (ms []h.Message) {
 	if peer != nil {
 		c.Active.DelNode(peer.Self)
 	}
 
 	for _, n := range c.Passive.Shuffled() {
-		if c.Active.IsEmpty() {
-			// High priority can't be rejected, so send async
-			// FIXME: this send may fail, we want to add to active only if it
-			// succeeds
-			ms = append(ms, h.SendNeighbor(n, c.Self, h.HighPriority))
-			break
-		} else {
-			m := h.SendNeighbor(n, c.Self, h.LowPriority)
-			// simulate sync network call
-			peer := c.world.get(n.ID)
-			refuse := peer.RecvNeighbor(m)
-			// any low priority response is failure
-			if len(refuse) == 0 {
-				c.DelPassive(n)
-				ms = append(ms, c.AddActive(n)...)
-				break
-			}
-			c.DelPassive(n)
+		// Failure always removes the node from our passive view
+		if c.world.shouldFail() {
+			c.DelPassive()
+			continue
 		}
+
+		pri := c.Active.IsEmpty()
+		m := h.SendNeighbor(n, c.Self, pri)
+
+		// simulate sync network call
+		peer := c.world.get(n.ID)
+		resp := peer.RecvNeighbor(m)
+
+		if pri == h.HighPriority {
+			c.AddActive(peer)
+			c.DelPassive(peer)
+			return resp
+		}
+
+		// a refuse means we move on, but keep the peer
+		if len(resp) != 0 {
+			continue
+		}
+
+		// we don't need to return AddActive because we certainly have an empty slot
+		c.AddActive(peer)
+		c.DelPassive(peer)
 	}
 
 	return ms
