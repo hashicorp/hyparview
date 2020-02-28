@@ -199,16 +199,16 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) (ms []Message) {
 		return ms
 	}
 
-	// min(Number of peers in the request, my passive view)
-	l := len(r.Active) + len(r.Passive) + 1
-	m := v.Passive.Size()
-	if l > m {
-		l = m
+	// min(configured length of the shuffle request, my passive view)
+	l := v.Config.ShuffleActive + v.Config.ShufflePassive + 1
+	p := v.Passive.Size()
+	if l > p {
+		l = p
 	}
 
 	// Send back l shuffled results
 	// FIXME this maybe should be the number of configured peers, not the number sent
-	ps := v.Passive.Shuffled()[0:l]
+	ps := v.Passive.Shuffled()[0:lReq]
 	ms = append(ms, SendShuffleReply(r.From, v.Self, ps))
 
 	// Keep the sent passive peers
