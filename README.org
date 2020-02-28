@@ -12,7 +12,7 @@
 =brew install gnuplot=
 =make=
 
-See =data= for the data input. Plotting output is there too.
+See =data= for the data input. Plotting output is in =plot=
 
 ** Known bugs
 
