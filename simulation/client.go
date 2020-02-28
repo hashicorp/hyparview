@@ -9,7 +9,6 @@ type Client struct {
 	world    *World
 	app      int // final value we got
 	appHops  int // final value's hops
-	appHot   int // gossip hotness
 	appSeen  int // if app == appSeen, we got every message
 	appWaste int // count of app messages that didn't change the value
 	out      []h.Message
@@ -72,10 +71,12 @@ func (c *Client) failActive(peer *Client) (ms []h.Message) {
 
 type gossip struct {
 	to   *h.Node
+	from *h.Node
 	app  int
 	hops int
 }
 
+// gossip is an h.Message
 func (g *gossip) To() *h.Node {
 	return g.to
 }
@@ -86,51 +87,26 @@ func (c *Client) gossip(i int) {
 
 // Example gossip implementation. For deterministic testing, each payload runs until the
 // message is completely distributed.
-func (c *Client) recvGossip(m *gossip) bool {
+func (c *Client) recvGossip(m *gossip) (ms []*gossip) {
 	if c.app >= m.app {
 		c.appWaste += 1
-		return false
+		return ms
 	}
 	c.app = m.app
 	c.appHops = m.hops
 	c.appSeen += 1
-	c.appHot = c.world.config.gossipHeat
 
-	// Count hops between peers
-	m.hops += 1
-
-	for c.appHot > 0 {
-		if h.Rint(c.world.config.gossipHeat) > c.appHot {
+	for _, peer := range c.Active.Nodes {
+		if peer.Equal(m.from) {
 			continue
 		}
+
 		if c.world.shouldFail() {
-			continue
+			ms = append(ms, c.failActive(peer)...)
 		}
 
-		node := c.Peer()
-		if node == nil {
-			// We're disconnected and can't make forward progress
-			if c.Passive.IsEmpty() {
-				return true
-			}
-
-			c.world.send(c.failActive(nil)...)
-			continue
-		}
-
-		peer := c.world.get(node.ID)
-		if c.world.shouldFail() {
-			c.world.send(c.failActive(peer)...)
-			continue
-		}
-
-		hot := peer.recvGossip(m)
-		if !hot || c.world.shouldFail() {
-			c.appHot -= 1
-		}
-
-		c.world.spinCountM["gossip"] += 1
-		c.world.spinPrint()
+		ms = append(ms, &gossip{from: c.Self, app: m.app, hops: m.hops + 1})
 	}
-	return true
+
+	return ms
 }
