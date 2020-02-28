@@ -11,6 +11,7 @@ func makeNodes(n int) []*Node {
 	ns := make([]*Node, n)
 	for i := 0; i < n; i++ {
 		ns[i] = &Node{
+			ID:   fmt.Sprintf("127.0.0.1:1000%d", i),
 			Addr: fmt.Sprintf("127.0.0.1:1000%d", i),
 		}
 	}
@@ -44,12 +45,13 @@ func TestShuffleRecv(t *testing.T) {
 	}
 
 	hv.AddActive(ns[1])
+	require.True(t, hv.Active.Contains(ns[1]))
 	require.True(t, hv.Active.IsEmptyBut(ns[1]))
-	hv.RecvShuffle(req)
 
+	hv.RecvShuffle(req)
 	require.True(t, hv.Passive.Contains(ns[3]))
-	require.Equal(t, 0, hv.Active.Size())
-	require.Equal(t, 6, hv.Passive.Size())
+	require.Equal(t, 1, hv.Active.Size())
+	require.Equal(t, 5, hv.Passive.Size())
 }
 
 func TestViewMaxAdd(t *testing.T) {
