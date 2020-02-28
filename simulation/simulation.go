@@ -2,6 +2,7 @@ package simulation
 
 import (
 	"fmt"
+	"log"
 )
 
 func simulation(c WorldConfig) *World {
@@ -26,15 +27,21 @@ func simulation(c WorldConfig) *World {
 		w.maybeShuffle()
 	}
 
-	// log.Printf("debug: send some gossip messages")
+	log.Printf("debug: send some gossip messages")
+	// avoid panic when rounds > peers
+	rounds := c.payloads
+	if rounds > c.peers {
+		rounds = c.peers
+	}
+
 	ns = w.randNodes()
-	for i := 1; i < c.payloads+1; i++ {
+	for i := 0; i < c.rounds; i++ {
 		// gossip drains all the hyparview messages and sends all the gossip
 		// messages before returning. Also maintains the active view
-		// node := ns[i] // client connects to a random node
-		// node.gossip(i)
-
-		w.traceRound(i)
+		node := ns[i] // client connects to a random node
+		p := i + 1
+		w.sendGossip(node.gossip(p)...)
+		w.traceRound(p)
 		w.maybeShuffle()
 	}
 
