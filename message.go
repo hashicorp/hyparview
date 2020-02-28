@@ -14,7 +14,7 @@ type JoinRequest struct {
 	From *Node
 }
 
-func (r *JoinRequest) To() *Node       { return r.to }
+func (r *JoinRequest) To() *Node { return r.to }
 
 func SendJoin(to *Node, from *Node) *JoinRequest {
 	return &JoinRequest{
@@ -30,7 +30,7 @@ type ForwardJoinRequest struct {
 	TTL  int
 }
 
-func (r *ForwardJoinRequest) To() *Node       { return r.to }
+func (r *ForwardJoinRequest) To() *Node { return r.to }
 
 func SendForwardJoin(to *Node, from *Node, join *Node, ttl int) *ForwardJoinRequest {
 	return &ForwardJoinRequest{
@@ -46,7 +46,7 @@ type DisconnectRequest struct {
 	From *Node
 }
 
-func (r *DisconnectRequest) To() *Node       { return r.to }
+func (r *DisconnectRequest) To() *Node { return r.to }
 
 func SendDisconnect(to *Node, from *Node) *DisconnectRequest {
 	return &DisconnectRequest{
@@ -62,7 +62,7 @@ type NeighborRequest struct {
 	Join     bool
 }
 
-func (r *NeighborRequest) To() *Node       { return r.to }
+func (r *NeighborRequest) To() *Node { return r.to }
 
 func SendNeighbor(to *Node, from *Node, priority bool) *NeighborRequest {
 	return &NeighborRequest{
@@ -86,7 +86,7 @@ type NeighborRefuse struct {
 	From *Node
 }
 
-func (r *NeighborRefuse) To() *Node       { return r.to }
+func (r *NeighborRefuse) To() *Node { return r.to }
 
 func SendNeighborRefuse(to *Node, from *Node) *NeighborRefuse {
 	return &NeighborRefuse{
