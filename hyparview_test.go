@@ -43,6 +43,8 @@ func TestShuffleRecv(t *testing.T) {
 		TTL:     0,
 	}
 
+	hv.AddActive(ns[1])
+	require.True(t, hv.Active.IsEmptyBut(ns[1]))
 	hv.RecvShuffle(req)
 
 	require.True(t, hv.Passive.Contains(ns[3]))

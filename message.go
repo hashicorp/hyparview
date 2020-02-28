@@ -98,17 +98,19 @@ func SendNeighborRefuse(to *Node, from *Node) *NeighborRefuse {
 type ShuffleRequest struct {
 	to      *Node
 	From    *Node
+	Origin  *Node
 	Active  []*Node
 	Passive []*Node
 	TTL     int
 }
 
-func (m *ShuffleRequest) To() *Node       { return m.to }
+func (m *ShuffleRequest) To() *Node { return m.to }
 
-func SendShuffle(to *Node, from *Node, active []*Node, passive []*Node, ttl int) *ShuffleRequest {
+func SendShuffle(to, from, origin *Node, active, passive []*Node, ttl int) *ShuffleRequest {
 	return &ShuffleRequest{
 		to:      to,
 		From:    from,
+		Origin:  from,
 		Active:  active,
 		Passive: passive,
 		TTL:     ttl,
@@ -121,7 +123,7 @@ type ShuffleReply struct {
 	Passive []*Node
 }
 
-func (m *ShuffleReply) To() *Node       { return m.to }
+func (m *ShuffleReply) To() *Node { return m.to }
 
 func SendShuffleReply(to *Node, from *Node, passive []*Node) *ShuffleReply {
 	return &ShuffleReply{

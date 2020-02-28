@@ -180,7 +180,7 @@ func (v *Hyparview) SendShuffle(node *Node) *ShuffleRequest {
 	as := v.Active.Shuffled()[:min(v.ShuffleActive, v.Active.Size())]
 	ps := v.Passive.Shuffled()[:min(v.ShufflePassive, v.Passive.Size())]
 	v.LastShuffle = ps
-	return SendShuffle(node, v.Self, as, ps, v.RWL.Shuffle)
+	return SendShuffle(node, v.Self, v.Self, as, ps, v.RWL.Shuffle)
 }
 
 // RecvShuffle processes a shuffle request. Paper
@@ -193,14 +193,13 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) (ms []Message) {
 			if n.Equal(r.From) {
 				continue
 			}
-			ms = append(ms, SendShuffle(n, r.From, r.Active, r.Passive, r.TTL-1))
+			ms = append(ms, SendShuffle(n, v.Self, r.From, r.Active, r.Passive, r.TTL-1))
 			break
 		}
 		return ms
 	}
 
 	// min(configured length of the shuffle request, my passive view)
-
 	// FIXME the paper says "the number of peers in the request", but it's clear that
 	// passive peers are distributed in the network more quickly if we use the number
 	// that should have been in the request
