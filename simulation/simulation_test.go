@@ -9,22 +9,18 @@ import (
 	"testing"
 
 	h "github.com/hashicorp/hyparview"
-	"github.com/stretchr/testify/assert"
 )
 
 // TestSimulation is the test entry point
 func TestSimulation(t *testing.T) {
 	count := 1
-	countEnv := os.Getenv("SIMULATION_COUNT")
-	if countEnv != "" {
-		conv, err := strconv.Atoi(countEnv)
-		if err == nil {
-			count = conv
-		}
+	conv, err := strconv.Atoi(os.Getenv("SIMULATION_COUNT"))
+	if err == nil {
+		count = conv
 	}
 
 	for i := 1; i <= count; i++ {
-		testSimulation(t, i, 10000)
+		testSimulation(t, i, 1000)
 	}
 }
 
@@ -44,10 +40,14 @@ func testSimulation(t *testing.T, i int, peers int) {
 		failureRate: 0,
 	})
 
-	assert.NoError(t, w.Connected())
-	err := w.isSymmetric()
+	err := w.Connected()
 	if err != nil {
-		fmt.Println(err)
+		t.Fail("graph disconnected: %s", err.Error())
+	}
+
+	err = w.isSymmetric()
+	if err != nil {
+		t.Fail("active view asymmetric: %s", err.Error())
 	}
 
 	// w.debugQueue()
