@@ -1,38 +1,68 @@
 * What's This?
 
-- Rogue project (aka push directly to master), proof of concept
 - Partial membership for gossip clusters
+- [[https://www.semanticscholar.org/paper/HyParView%253A-A-Membership-Protocol-for-Reliable-Leit%C3%A3o-Pereira/a2562ede25e8ed2c7c1d888d72b625a526b3b25a][The Paper]] in production in [[http://partisan.cloud][Partisan]]
 - 10k node cluster requires 5 active and 30 passive peers in views at
   each node
-- >90% of members have to fail before manual intervention is required
-  to restore the cluster
-- [[https://www.semanticscholar.org/paper/HyParView%253A-A-Membership-Protocol-for-Reliable-Leit%C3%A3o-Pereira/a2562ede25e8ed2c7c1d888d72b625a526b3b25a][Paper]] in production in [[http://partisan.cloud][Partisan]]
 - Side goal: demonstrate separation of state changes from async or
   mutex behavior to improve testing options
+
+* Running The Simulation
+
+=brew install gnuplot=
+=make=
+
+See =data= for the data input. Plotting output is there too.
+
+** Known bugs
+
+- The simulation shows that a small number of nodes are disconnected,
+  probably related to implementing failure correctly
+
+- On failure, hyparview should recover a new active peer from it's
+  passive view and send the failed message. This behavior is only
+  partially implemented in the simulator, so it tolerates failures on
+  the initial graph population very poorly
+
+* Related Topics for Improving the Approach
+
+- Thicket ([[https://www.gsd.inesc-id.pt/~ler/reports/srds10.pdf][Thicket PDF]], also by Leitão and Rodrigues) describes
+  multiple spanning tree approach to sending application messages,
+  which reduces waste messages while remaining resilient to churn. The
+  simulator currently implements very simple epidemic gossip
+  transmission where the active view size is the degree of fanout
+  (novel messages are forwarded to all active peers). Waste and path
+  length are plotted.
+
+- In the Peer Sample paper (which uses only the passive view), entries
+  are tagged with a timestamp of the last direct active contact, and
+  the shuffling algorithm is biased to penalize old entries. This
+  allows a dead node to fall out of the passive view of the total
+  network more quickly. This may have a detrimental effect if a
+  network is partitioned on recovery.
+
+- Partion recovery in general needs more investigation, there may be a
+  risk that partioned networks would repair their respective active
+  views and interconnected tightly, so that repairing the partion
+  would lead to two well connected networks joined by just a few
+  nodes.
+
+* Improvements to the Code
+
+- Incorporate =gossip= into the main implementation. This requires an
+  extended interface that allows us to model gossip messages and
+  client applictions to replace their payloads with meaningful content
+
+- Incorporate =failActive= directly into the code. Because it relies
+  on synchronous low priority =Neighbor= requests, it requires a sort
+  of iterator interface (or some other refactoring)
+
+- Minor, dependent on research results: the view constructor takes the
+  expected number of peers as an argument, and should use that to set
+  the appropriate default configuration, once it's factors are known
+  outside the values given in the paper
 
 * Live Test
 
 There's an example secure GRPC application of this library at
 [[https://github.com/hashicorp/hyparview-example][hyparview-example]]. It will be used for a live test on hardware.
-
-* Roadmap
-
-- [X] Rename active, it defines both windows
-- [X] Unique types for all the messages, for grpc
-- [X] RecvShuffle
-- [-] Client simulation v0
-  - [X] Graph connection test
-  - [X] Intermittent failures
-  - [X] Keep the random seed for replay
-  - [X] Gossip application
-  - [ ] Active view maintenance
-
-* Simulation
-
-- [X] Create & join nodes
-: ActiveSize * RWL.Active ForwardJoinRequests => 30
-- [X] Shuffle
-: 1 + RWL.Shuffle + ShuffleReply => 8 (needs 9...)
-- [X] Maintain active view (rejoin when empty)
-- [X] Active failures
-- [X] Request failures
