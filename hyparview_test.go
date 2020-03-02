@@ -20,7 +20,7 @@ func makeNodes(n int) []*Node {
 
 func testView(count int) (*Hyparview, []*Node) {
 	ns := makeNodes(count)
-	sd := newSliceSender()
+	sd := NewSliceSender()
 	hv := CreateView(sd, ns[0], 0)
 	return hv, ns
 }
