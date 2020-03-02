@@ -11,15 +11,17 @@ type Client struct {
 	appHops  int // final value's hops
 	appSeen  int // if app == appSeen, we got every message
 	appWaste int // count of app messages that didn't change the value
-	out      []h.Message
+	s        *h.SliceSender
 }
 
 func makeClient(w *World, id string) *Client {
-	v := h.CreateView(&h.Node{ID: id, Addr: id}, 0)
+	s := h.newSliceSender()
+	n := &Node{ID: id, Addr: id}
+	v := h.CreateView(s, n, 0)
 	c := &Client{
 		Hyparview: *v,
 		world:     w,
-		out:       make([]h.Message, 0),
+		s:         s,
 	}
 	return c
 }
