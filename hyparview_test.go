@@ -20,7 +20,8 @@ func makeNodes(n int) []*Node {
 
 func testView(count int) (*Hyparview, []*Node) {
 	ns := makeNodes(count)
-	hv := CreateView(ns[0], 0)
+	sd := newSliceSender()
+	hv := CreateView(sd, ns[0], 0)
 	return hv, ns
 }
 
@@ -55,7 +56,7 @@ func TestShuffleRecv(t *testing.T) {
 }
 
 func TestViewMaxAdd(t *testing.T) {
-	v := CreateView(NewNode("self"), 0)
+	v := CreateView(newSliceSender(), NewNode("self"), 0)
 	require.Equal(t, 30, v.Passive.Max)
 	v.Passive.Max = 3
 	v.AddPassive(NewNode("a"))
@@ -67,7 +68,7 @@ func TestViewMaxAdd(t *testing.T) {
 }
 
 func TestDisconnect(t *testing.T) {
-	v := CreateView(NewNode("self"), 0)
+	v := CreateView(newSliceSender(), NewNode("self"), 0)
 	n := NewNode("a")
 	v.AddActive(n)
 	v.RecvDisconnect(SendDisconnect(v.Self, n))
@@ -76,24 +77,28 @@ func TestDisconnect(t *testing.T) {
 }
 
 func TestRecvForwardJoin(t *testing.T) {
-	v := CreateView(NewNode("self"), 0)
+	s := newSliceSender()
+	v := CreateView(s, NewNode("self"), 0)
 	a := NewNode("a")
 	b := NewNode("b")
 	c := NewNode("c")
 
 	v.AddActive(a)
 	m := SendForwardJoin(v.Self, b, a, 6)
-	ms := v.RecvForwardJoin(m)
+	v.RecvForwardJoin(m)
+	ms := s.reset()
 	require.Equal(t, 0, len(ms))
 
 	m = SendForwardJoin(v.Self, a, b, 6)
-	ms = v.RecvForwardJoin(m)
+	v.RecvForwardJoin(m)
+	ms = s.reset()
 	require.Equal(t, 1, len(ms))
 	_, ok := ms[0].(*NeighborRequest)
 	require.True(t, ok)
 
 	m = SendForwardJoin(v.Self, a, c, 6)
-	ms = v.RecvForwardJoin(m)
+	v.RecvForwardJoin(m)
+	ms = s.reset()
 	require.Equal(t, 1, len(ms))
 	fwd, ok := ms[0].(*ForwardJoinRequest)
 	require.True(t, ok)

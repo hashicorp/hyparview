@@ -1,22 +1,26 @@
 package hyparview
 
 // testSender needs a struct to keep the pointer to the slice
-type SliceSender struct {
-	Messages []Message
+type sliceSender struct {
+	ms []Message
 }
 
-func (s *SliceSender) Send(ms ...Message) {
-	s.Messages = append(s.Messages, ms...)
+func (s *sliceSender) Send(ms ...Message) error {
+	s.ms = append(s.ms, ms...)
+	return nil
 }
 
-func (s *SliceSender) Reset() []Message {
-	ms := s.Messages
-	s.Messages = []Message{}
+func (s *sliceSender) Fail(n *Node) {
+}
+
+func (s *sliceSender) reset() []Message {
+	ms := s.ms
+	s.ms = []Message{}
 	return ms
 }
 
-func NewSliceSender() *SliceSender {
-	n := &SliceSender{}
-	n.Reset()
+func newSliceSender() *sliceSender {
+	n := &sliceSender{}
+	n.reset()
 	return n
 }
