@@ -7,19 +7,19 @@ const (
 
 type JoinRequest struct {
 	to   *Node
-	From *Node
+	from *Node
 }
 
 func SendJoin(to *Node, from *Node) *JoinRequest {
 	return &JoinRequest{
 		to:   to,
-		From: from,
+		from: from,
 	}
 }
 
 type ForwardJoinRequest struct {
 	to   *Node
-	From *Node
+	from *Node
 	Join *Node
 	TTL  int
 }
@@ -27,7 +27,7 @@ type ForwardJoinRequest struct {
 func SendForwardJoin(to *Node, from *Node, join *Node, ttl int) *ForwardJoinRequest {
 	return &ForwardJoinRequest{
 		to:   to,
-		From: from,
+		from: from,
 		Join: join,
 		TTL:  ttl,
 	}
@@ -35,19 +35,19 @@ func SendForwardJoin(to *Node, from *Node, join *Node, ttl int) *ForwardJoinRequ
 
 type DisconnectRequest struct {
 	to   *Node
-	From *Node
+	from *Node
 }
 
 func SendDisconnect(to *Node, from *Node) *DisconnectRequest {
 	return &DisconnectRequest{
 		to:   to,
-		From: from,
+		from: from,
 	}
 }
 
 type NeighborRequest struct {
 	to       *Node
-	From     *Node
+	from     *Node
 	Priority bool
 	Join     bool
 }
@@ -55,7 +55,7 @@ type NeighborRequest struct {
 func SendNeighbor(to *Node, from *Node, priority bool) *NeighborRequest {
 	return &NeighborRequest{
 		to:       to,
-		From:     from,
+		from:     from,
 		Priority: priority,
 	}
 }
@@ -63,7 +63,7 @@ func SendNeighbor(to *Node, from *Node, priority bool) *NeighborRequest {
 func SendNeighborJoin(to *Node, from *Node) *NeighborRequest {
 	return &NeighborRequest{
 		to:       to,
-		From:     from,
+		from:     from,
 		Priority: HighPriority,
 		Join:     true,
 	}
@@ -71,19 +71,19 @@ func SendNeighborJoin(to *Node, from *Node) *NeighborRequest {
 
 type NeighborRefuse struct {
 	to   *Node
-	From *Node
+	from *Node
 }
 
 func SendNeighborRefuse(to *Node, from *Node) *NeighborRefuse {
 	return &NeighborRefuse{
 		to:   to,
-		From: from,
+		from: from,
 	}
 }
 
 type ShuffleRequest struct {
 	to      *Node
-	From    *Node
+	from    *Node
 	Origin  *Node
 	Active  []*Node
 	Passive []*Node
@@ -93,7 +93,7 @@ type ShuffleRequest struct {
 func SendShuffle(to, from, origin *Node, active, passive []*Node, ttl int) *ShuffleRequest {
 	return &ShuffleRequest{
 		to:      to,
-		From:    from,
+		from:    from,
 		Origin:  from,
 		Active:  active,
 		Passive: passive,
@@ -103,21 +103,21 @@ func SendShuffle(to, from, origin *Node, active, passive []*Node, ttl int) *Shuf
 
 type ShuffleReply struct {
 	to      *Node
-	From    *Node
+	from    *Node
 	Passive []*Node
 }
 
 func SendShuffleReply(to *Node, from *Node, passive []*Node) *ShuffleReply {
 	return &ShuffleReply{
 		to:      to,
-		From:    from,
+		from:    from,
 		Passive: passive,
 	}
 }
 
 type Gossip struct {
 	to      *Node
-	From    *Node
+	from    *Node
 	Payload int
 	Hops    int
 }

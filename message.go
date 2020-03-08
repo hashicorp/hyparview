@@ -4,6 +4,7 @@ package hyparview
 type Message interface {
 	To() *Node
 	AssocTo(*Node) Message
+	From() *Node
 }
 
 // Methods that can be generated should be added to message.go.genny, and build by `make

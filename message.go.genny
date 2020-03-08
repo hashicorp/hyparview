@@ -15,3 +15,7 @@ func (r genericReq) AssocTo(n *Node) Message {
 	o.to = n
 	return &o
 }
+
+func (r genericReq) From() *Node {
+	return r.from
+}
