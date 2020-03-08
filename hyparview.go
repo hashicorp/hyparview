@@ -1,10 +1,5 @@
 package hyparview
 
-type Send interface {
-	Send(...Message) error
-	Fail(*Node)
-}
-
 type ConfigRandomWalkLength struct {
 	Active  int
 	Passive int
@@ -53,7 +48,7 @@ func CreateView(s Send, self *Node, n int) *Hyparview {
 func (v *Hyparview) SendJoin(peer *Node) {
 	// Usually on run at bootstrap, where this will never produce disconnect messages
 	v.AddActive(peer)
-	v.S.Send(SendJoin(peer, v.Self))
+	v.Send(SendJoin(peer, v.Self))
 }
 
 // RecvJoin processes a Join following the paper
@@ -65,7 +60,7 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) {
 		if n.Equal(r.From) {
 			continue
 		}
-		v.S.Send(SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
+		v.Send(SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
 	}
 }
 
@@ -78,7 +73,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
 		}
 
 		v.AddActive(r.Join)
-		v.S.Send(SendNeighborJoin(r.Join, v.Self))
+		v.Send(SendNeighborJoin(r.Join, v.Self))
 		return
 	}
 
@@ -91,7 +86,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
 		if n.Equal(r.Join) {
 			continue
 		}
-		v.S.Send(SendForwardJoin(n, v.Self, r.Join, r.TTL-1))
+		v.Send(SendForwardJoin(n, v.Self, r.Join, r.TTL-1))
 		break
 	}
 }
@@ -103,7 +98,7 @@ func (v *Hyparview) DropRandActive() {
 	node := v.Active.GetIndex(idx)
 	v.Active.DelIndex(idx)
 	v.AddPassive(node)
-	v.S.Send(SendDisconnect(node, v.Self))
+	v.Send(SendDisconnect(node, v.Self))
 }
 
 // AddActive adds a node to the active view, possibly dropping an active peer to make room.
@@ -190,7 +185,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 			if n.Equal(r.From) {
 				continue
 			}
-			v.S.Send(SendShuffle(n, v.Self, r.From, r.Active, r.Passive, r.TTL-1))
+			v.Send(SendShuffle(n, v.Self, r.From, r.Active, r.Passive, r.TTL-1))
 			break
 		}
 		return
@@ -208,7 +203,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 
 	// Send back l shuffled results
 	ps := v.Passive.Shuffled()[0:l]
-	v.S.Send(SendShuffleReply(r.From, v.Self, ps))
+	v.Send(SendShuffleReply(r.From, v.Self, ps))
 
 	// Keep the sent passive peers
 	// addShuffle is going to destructively use this
