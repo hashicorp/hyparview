@@ -18,10 +18,33 @@ func makeNodes(n int) []*Node {
 	return ns
 }
 
+type sliceSender struct {
+	ms []Message
+}
+
+func (s *sliceSender) Send(m Message) (Message, error) {
+	s.ms = append(s.ms, m)
+	return nil, nil
+}
+
+func (s *sliceSender) Failed(n *Node) {
+}
+
+func (s *sliceSender) reset() (ms []Message) {
+	out := s.ms
+	s.ms = []Message{}
+	return out
+}
+
+func newSliceSender() *sliceSender {
+	s := &sliceSender{}
+	s.reset()
+	return s
+}
+
 func testView(count int) (*Hyparview, []*Node) {
 	ns := makeNodes(count)
-	sd := NewSliceSender()
-	hv := CreateView(sd, ns[0], 0)
+	hv := CreateView(newSliceSender(), ns[0], 0)
 	return hv, ns
 }
 
@@ -39,7 +62,7 @@ func TestShuffleRecv(t *testing.T) {
 
 	req := &ShuffleRequest{
 		to:      ns[0],
-		From:    ns[1],
+		from:    ns[1],
 		Active:  ns[1:3],
 		Passive: ns[3:7],
 		TTL:     0,

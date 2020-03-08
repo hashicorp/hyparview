@@ -53,14 +53,14 @@ func (v *Hyparview) SendJoin(peer *Node) {
 
 // RecvJoin processes a Join following the paper
 func (v *Hyparview) RecvJoin(r *JoinRequest) {
-	v.AddActive(r.From)
+	v.AddActive(r.From())
 
 	// Forward to all active peers
 	for _, n := range v.Active.Nodes {
-		if n.Equal(r.From) {
+		if n.Equal(r.From()) {
 			continue
 		}
-		v.Send(SendForwardJoin(n, v.Self, r.From, v.RWL.Active))
+		v.Send(SendForwardJoin(n, v.Self, r.From(), v.RWL.Active))
 	}
 }
 
@@ -142,17 +142,17 @@ func (v *Hyparview) DelPassive(node *Node) {
 
 // RecvDisconnect processes a disconnect, demoting the sender to the passive view
 func (v *Hyparview) RecvDisconnect(r *DisconnectRequest) {
-	idx := v.Active.ContainsIndex(r.From)
+	idx := v.Active.ContainsIndex(r.From())
 	if idx >= 0 {
 		v.Active.DelIndex(idx)
-		v.AddPassive(r.From)
+		v.AddPassive(r.From())
 	}
 }
 
 // RecvNeighbor processes a neighbor, sent during failure recovery
 // Returns at most one NeighborRefuse, which must be replied to the client
 func (v *Hyparview) RecvNeighbor(r *NeighborRequest) *NeighborRefuse {
-	node := r.From
+	node := r.From()
 	priority := r.Priority
 	if v.Active.IsFull() && priority == LowPriority {
 		return SendNeighborRefuse(node, v.Self)
@@ -179,13 +179,13 @@ func (v *Hyparview) SendShuffle(node *Node) *ShuffleRequest {
 func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	// If the active view size is one, it means that our only active peer is sender of
 	// this shuffle message
-	if r.TTL >= 0 && !v.Active.IsEmptyBut(r.From) {
+	if r.TTL >= 0 && !v.Active.IsEmptyBut(r.From()) {
 		// Forward to one active non-sender
 		for _, n := range v.Active.Shuffled() {
-			if n.Equal(r.From) {
+			if n.Equal(r.From()) {
 				continue
 			}
-			v.Send(SendShuffle(n, v.Self, r.From, r.Active, r.Passive, r.TTL-1))
+			v.Send(SendShuffle(n, v.Self, r.From(), r.Active, r.Passive, r.TTL-1))
 			break
 		}
 		return
@@ -203,12 +203,12 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 
 	// Send back l shuffled results
 	ps := v.Passive.Shuffled()[0:l]
-	v.Send(SendShuffleReply(r.From, v.Self, ps))
+	v.Send(SendShuffleReply(r.From(), v.Self, ps))
 
 	// Keep the sent passive peers
 	// addShuffle is going to destructively use this
 
-	v.addShuffle(r.From)
+	v.addShuffle(r.From())
 	for _, n := range r.Active {
 		v.addShuffle(n)
 	}
