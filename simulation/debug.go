@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	h "github.com/hashicorp/hyparview"
 )
 
 // symCheck is an adhoc debugging tool
@@ -21,7 +23,7 @@ func (w *World) symCheck(m h.Message) {
 
 	switch m1 := m.(type) {
 	// case *h.JoinRequest:
-	// 	fmt.Printf("%s %s\n", m1.To().ID, m1.From.ID)
+	// 	fmt.Printf("%s %s\n", m1.To().ID, m1.From().ID)
 
 	case *h.ForwardJoinRequest:
 		if w.spinCount >= 1000000 {
@@ -30,7 +32,7 @@ func (w *World) symCheck(m h.Message) {
 		} else {
 			w.spinCount += 1
 		}
-		if m1.From.ID == m1.To().ID {
+		if m1.From().ID == m1.To().ID {
 			log.Printf("fwd  dup")
 		}
 		if m1.TTL < 0 {
@@ -38,27 +40,27 @@ func (w *World) symCheck(m h.Message) {
 		}
 
 	case *h.DisconnectRequest:
-		if m1.From.ID == m1.To().ID {
+		if m1.From().ID == m1.To().ID {
 			log.Printf("diss dup")
 		}
-		n := w.get(m1.From.ID)
+		n := w.get(m1.From().ID)
 		m := w.get(m.To().ID)
 		if n.Active.Contains(m.Self) {
-			log.Printf("diss %s %s", m1.From.ID, m1.To().ID)
+			log.Printf("diss %s %s", m1.From().ID, m1.To().ID)
 		}
 
 		if m.Active.Contains(n.Self) {
-			log.Printf("disr %s %s", m1.From.ID, m1.To().ID)
+			log.Printf("disr %s %s", m1.From().ID, m1.To().ID)
 		}
 
 	case *h.NeighborRequest:
-		if !m1.Join || m1.From.ID == m1.To().ID {
+		if !m1.Join || m1.From().ID == m1.To().ID {
 			return
 		}
-		n := w.get(m1.From.ID)
+		n := w.get(m1.From().ID)
 		m := w.get(m.To().ID)
 		if !(n.Active.Contains(m.Self) && m.Active.Contains(n.Self)) {
-			log.Printf("nei %s %s", m1.From.ID, m1.To().ID)
+			log.Printf("nei %s %s", m1.From().ID, m1.To().ID)
 		}
 	default:
 	}
