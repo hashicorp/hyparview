@@ -4,7 +4,7 @@ import "github.com/cheekybits/genny/generic"
 
 type genericReq generic.Type
 
-//go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "genericReq=*JoinRequest,*ForwardJoinRequest,*DisconnectRequest,*NeighborRequest,*NeighborRefuse,*ShuffleRequest,*ShuffleReply,*Gossip"
+//go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "genericReq=*JoinRequest,*ForwardJoinRequest,*DisconnectRequest,*NeighborRequest,*NeighborRefuse,*ShuffleRequest,*ShuffleReply"
 
 func (r genericReq) To() *Node {
 	return r.to

@@ -101,17 +101,3 @@ func (r *ShuffleReply) AssocTo(n *Node) Message {
 func (r *ShuffleReply) From() *Node {
 	return r.from
 }
-
-func (r *Gossip) To() *Node {
-	return r.to
-}
-
-func (r *Gossip) AssocTo(n *Node) Message {
-	o := *r
-	o.to = n
-	return &o
-}
-
-func (r *Gossip) From() *Node {
-	return r.from
-}
