@@ -94,7 +94,7 @@ func TestDisconnect(t *testing.T) {
 	v := CreateView(newSliceSender(), NewNode("self"), 0)
 	n := NewNode("a")
 	v.AddActive(n)
-	v.RecvDisconnect(SendDisconnect(v.Self, n))
+	v.RecvDisconnect(NewDisconnect(v.Self, n))
 	require.False(t, v.Active.Contains(n))
 	require.True(t, v.Passive.Contains(n))
 }
@@ -107,19 +107,19 @@ func TestRecvForwardJoin(t *testing.T) {
 	c := NewNode("c")
 
 	v.AddActive(a)
-	m := SendForwardJoin(v.Self, b, a, 6)
+	m := NewForwardJoin(v.Self, b, a, 6)
 	v.RecvForwardJoin(m)
 	ms := s.reset()
 	require.Equal(t, 0, len(ms))
 
-	m = SendForwardJoin(v.Self, a, b, 6)
+	m = NewForwardJoin(v.Self, a, b, 6)
 	v.RecvForwardJoin(m)
 	ms = s.reset()
 	require.Equal(t, 1, len(ms))
 	_, ok := ms[0].(*NeighborRequest)
 	require.True(t, ok)
 
-	m = SendForwardJoin(v.Self, a, c, 6)
+	m = NewForwardJoin(v.Self, a, c, 6)
 	v.RecvForwardJoin(m)
 	ms = s.reset()
 	require.Equal(t, 1, len(ms))

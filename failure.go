@@ -41,7 +41,7 @@ func (v *Hyparview) Send(ms ...Message) {
 func (v *Hyparview) PromotePassive() *Node {
 	for _, n := range v.Passive.Shuffled() {
 		pri := v.Active.IsEmpty()
-		m := SendNeighbor(n, v.Self, pri)
+		m := NewNeighbor(n, v.Self, pri)
 
 		resp, err := v.S.Send(m)
 		if err != nil {
