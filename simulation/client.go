@@ -24,12 +24,21 @@ func makeClient(w *World, id string) *Client {
 	return c
 }
 
+func (c *Client) recv(m h.Message) h.Message {
+	switch m1 := m.(type) {
+	case *gossip:
+		c.recvGossip(m1)
+		return nil
+	default:
+		return c.Recv(m)
+	}
+}
+
 // Implement the sender interface
 func (c *Client) Send(m h.Message) (h.Message, error) {
 	c.w.totalMessages += 1
 	peer := c.w.get(m.To().ID)
-	resp := peer.Recv(m)
-	return resp, nil
+	return peer.recv(m), nil
 }
 
 func (c *Client) Failed(peer *h.Node) {
