@@ -1,0 +1,17 @@
+package hyparview
+
+import "github.com/cheekybits/genny/generic"
+
+type genericReq generic.Type
+
+//go:generate genny -in=$GOFILE -out=gen-$GOFILE gen "genericReq=*JoinRequest,*ForwardJoinRequest,*DisconnectRequest,*NeighborRequest,*NeighborRefuse,*ShuffleRequest,*ShuffleReply,*Gossip"
+
+func (r genericReq) To() *Node {
+	return r.to
+}
+
+func (r genericReq) AssocTo(n *Node) Message {
+	o := *r
+	o.to = n
+	return &o
+}

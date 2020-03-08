@@ -1,21 +1,11 @@
-//go:generate genny -in=message.go -out=message-gen.go gen "genericReq=JoinRequest,ForwardJoinRequest,DisconnectRequest,NeighborRequest,NeighborRefuse,ShuffleRequest,ShuffleReply,Gossip"
 package hyparview
 
-import "github.com/cheekybits/genny/generic"
-
+// Message allows clients to redefine hyparview messages to carry additional meta information
 type Message interface {
 	To() *Node
 	AssocTo(*Node) Message
 }
 
-type genericReq generic.Type
-
-func (r *genericReq) To() *Node {
-	return r.to
-}
-
-func (r *genericReq) AssocTo(n *Node) *Node {
-	o := *r
-	o.to = n
-	return &o
-}
+// Methods that can be generated should be added to message.go.genny, and build by `make
+// test`. The genny generator does some funny things around interfaces and type receivers,
+// so the template file isn't included in the build for now.
