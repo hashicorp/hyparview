@@ -25,7 +25,7 @@ func (v *Hyparview) Send(ms ...Message) {
 		_, err := v.S.Send(m)
 		if err != nil {
 			v.Active.DelNode(n)
-			sub := v.PromotePassive(n)
+			sub := v.PromotePassive()
 			if sub == nil {
 				// FIXME ?
 			}
@@ -41,7 +41,7 @@ func (v *Hyparview) Send(ms ...Message) {
 func (v *Hyparview) PromotePassive() *Node {
 	for _, n := range v.Passive.Shuffled() {
 		pri := v.Active.IsEmpty()
-		m := SendNeighbor(n, c.Self, pri)
+		m := SendNeighbor(n, v.Self, pri)
 
 		resp, err := v.S.Send(m)
 		if err != nil {
@@ -49,19 +49,20 @@ func (v *Hyparview) PromotePassive() *Node {
 			continue
 		}
 
-		if pri == h.HighPriority {
-			c.AddActive(n)
-			c.DelPassive(n)
+		if pri == HighPriority {
+			v.AddActive(n)
+			v.DelPassive(n)
 			return n
 		}
 
 		// Low priority, a refuse means we move on but keep the peer
-		if len(resp) != 0 {
+		if resp != nil {
 			continue
 		}
 
-		c.AddActive(n)
-		c.DelPassive(n)
+		v.AddActive(n)
+		v.DelPassive(n)
 		return n
 	}
+	return nil
 }
