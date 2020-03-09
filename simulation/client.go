@@ -27,7 +27,7 @@ func makeClient(w *World, id string) *Client {
 	return c
 }
 
-func (c *Client) recv(m h.Message) h.Message {
+func (c *Client) recv(m h.Message) *h.NeighborRefuse {
 	switch m1 := m.(type) {
 	case *gossip:
 		c.recvGossip(m1)
@@ -40,7 +40,7 @@ func (c *Client) recv(m h.Message) h.Message {
 }
 
 // Implement the sender interface
-func (c *Client) Send(m h.Message) (h.Message, error) {
+func (c *Client) Send(m h.Message) (*h.NeighborRefuse, error) {
 	if h.Rint(100) < c.w.config.failureRate {
 		return nil, fmt.Errorf("random error")
 	}
