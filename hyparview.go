@@ -1,5 +1,7 @@
 package hyparview
 
+import "fmt"
+
 type ConfigRandomWalkLength struct {
 	Active  int
 	Passive int
