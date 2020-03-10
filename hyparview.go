@@ -85,7 +85,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
 
 	// Forward to one not-sender active peer
 	for _, n := range v.Active.Shuffled() {
-		if n.Equal(r.Join) {
+		if n.Equal(r.From()) {
 			continue
 		}
 		v.Send(NewForwardJoin(n, v.Self, r.Join, r.TTL-1))

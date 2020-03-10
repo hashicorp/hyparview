@@ -23,7 +23,7 @@ type sliceSender struct {
 	ms []Message
 }
 
-func (s *sliceSender) Send(m Message) (Message, error) {
+func (s *sliceSender) Send(m Message) (*NeighborRefuse, error) {
 	s.ms = append(s.ms, m)
 	return nil, nil
 }
