@@ -1,5 +1,9 @@
 export SIMULATION_COUNT=1
 
+test: message-generated.go
+	go test
+.PHONY: test
+
 simulation: ## run the simulation test
 	mkdir -p plot data
 	cd simulation && go test -v . || exit 0
@@ -11,6 +15,8 @@ plot: ## make plots from simulation data
 	./bin/plot-gossip $(SIMULATION_COUNT) > plot/gossip.png
 .PHONY: plot
 
-test:
-	go test
-.PHONY: test
+message-generated.go: message.go message.go.genny
+	ln message.go.genny tmp.go
+	go generate
+	mv gen-tmp.go $@
+	rm tmp.go

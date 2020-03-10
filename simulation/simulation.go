@@ -23,7 +23,7 @@ func simulation(c WorldConfig) *World {
 	boot := ns[0]
 	for _, me := range ns[1:] {
 		// boot := w.nodes[fmt.Sprintf("n%d", h.Rint(i))]
-		w.send(me.SendJoin(boot.Self)...)
+		me.SendJoin(boot.Self)
 		w.maybeShuffle()
 	}
 
@@ -40,7 +40,7 @@ func simulation(c WorldConfig) *World {
 		// messages before returning. Also maintains the active view
 		node := ns[i] // client connects to a random node
 		p := i + 1
-		w.sendGossip(node.gossip(p)...)
+		node.gossip(p)
 		w.traceRound(p)
 		w.maybeShuffle()
 	}
@@ -54,11 +54,7 @@ func (w *World) maybeShuffle() {
 	}
 
 	ns := w.randNodes()
-	for _, me := range ns {
-		p, ms := me.getPeer()
-		w.send(ms...)
-		if p != nil {
-			w.send(me.SendShuffle(p))
-		}
+	for _, n := range ns {
+		n.SendShuffle(n.Peer())
 	}
 }
