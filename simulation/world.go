@@ -45,8 +45,3 @@ func (w *World) randNodes() (ns []*Client) {
 	}
 	return ns
 }
-
-// TODO: maybe accept the message we're deciding for and do different things?
-func (w *World) shouldFail() bool {
-	return false
-}
