@@ -147,6 +147,11 @@ func (v *Hyparview) RecvDisconnect(r *DisconnectRequest) {
 		v.Active.DelIndex(idx)
 		v.AddPassive(r.From())
 	}
+	// if v.Active.IsEmpty() {
+	// 	log.Printf("DEBUG %s disconnected %d passive\n", v.Self.ID, v.Passive.Size())
+	// }
+
+	v.PromotePassiveBut(r.From())
 }
 
 // RecvNeighbor processes a neighbor, sent during failure recovery
@@ -255,12 +260,12 @@ func (v *Hyparview) Recv(m Message) *NeighborRefuse {
 	case *JoinRequest:
 		v.RecvJoin(m1)
 		// if len(ms) > v.Active.Max {
-		// 	fmt.Printf("JOIN %d\n", len(ms))
+		// 	log.Printf("DEBUG join %d\n", len(ms))
 		// }
 	case *ForwardJoinRequest:
 		v.RecvForwardJoin(m1)
 		// if len(ms) > 1 {
-		// 	fmt.Printf("FORWARD %d\n", len(ms))
+		// 	log.Printf("DEBUG forward %d\n", len(ms))
 		// }
 	case *DisconnectRequest:
 		v.RecvDisconnect(m1)

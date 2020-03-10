@@ -27,7 +27,9 @@ func (v *Hyparview) Send(ms ...Message) {
 			v.Active.DelNode(n)
 			sub := v.PromotePassive()
 			if sub == nil {
-				// FIXME ?
+				// FIXME re-Join
+				// log.Printf("WARN empty passive view, fail %d", len(ms)-i)
+				return
 			}
 			subs[n.ID] = sub
 			v.S.Failed(n)
@@ -39,8 +41,17 @@ func (v *Hyparview) Send(ms ...Message) {
 }
 
 func (v *Hyparview) PromotePassive() *Node {
+	return v.PromotePassiveBut(nil)
+}
+
+func (v *Hyparview) PromotePassiveBut(peer *Node) *Node {
+	pri := v.Active.IsEmpty()
+
 	for _, n := range v.Passive.Shuffled() {
-		pri := v.Active.IsEmpty()
+		if n.Equal(peer) {
+			continue
+		}
+
 		m := NewNeighbor(n, v.Self, pri)
 
 		resp, err := v.S.Send(m)
