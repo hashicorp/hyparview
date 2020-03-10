@@ -34,7 +34,7 @@ See =data= for the data input. Plotting output is in =plot=
   (novel messages are forwarded to all active peers). Waste and path
   length are plotted.
 
-- In the Peer Sample paper (which uses only the passive view), entries
+- In the [[https://www.semanticscholar.org/paper/Gossip-based-peer-sampling-Jelasity-Voulgaris/b571ec0ac7173bcecfe1b3095af2f6a5232526a9][Peer Sample]] paper (which uses only the passive view), entries
   are tagged with a timestamp of the last direct active contact, and
   the shuffling algorithm is biased to penalize old entries. This
   allows a dead node to fall out of the passive view of the total
