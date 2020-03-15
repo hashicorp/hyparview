@@ -7,6 +7,8 @@ type Send interface {
 	// Failed is called after hyparview has handled the failure, to handle e.g.
 	// connection cleanup
 	Failed(*Node)
+	// Bootstrap sends a join to some server, discovered by some external consideration
+	Bootstrap() *Node
 }
 
 // Send wraps the S.Send sender in appropriate error handling
@@ -25,14 +27,17 @@ func (v *Hyparview) Send(ms ...Message) {
 		_, err := v.S.Send(m)
 		if err != nil {
 			v.Active.DelNode(n)
+			v.S.Failed(n)
 			sub := v.PromotePassive()
+
 			if sub == nil {
 				// FIXME re-Join
 				// log.Printf("WARN empty passive view, fail %d", len(ms)-i)
-				return
+				// return
+				sub = v.S.Bootstrap()
 			}
+
 			subs[n.ID] = sub
-			v.S.Failed(n)
 		} else {
 			// On failure, retry the failed message with the replacement server
 			i++
