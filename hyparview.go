@@ -219,6 +219,8 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	for _, n := range r.Passive {
 		v.addShuffle(n)
 	}
+
+	v.greedyShuffle()
 }
 
 // addShuffle processes one node to be added to the passive view. If the node is us or
