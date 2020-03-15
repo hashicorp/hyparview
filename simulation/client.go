@@ -40,9 +40,19 @@ func (c *Client) recv(m h.Message) *h.NeighborRefuse {
 	}
 }
 
+func (c *Client) shouldFail() bool {
+	retries := 3
+	for i := retries; i > 0; i-- {
+		if h.Rint(100) > c.w.config.failureRate {
+			return false
+		}
+	}
+	return true
+}
+
 // Implement the sender interface
 func (c *Client) Send(m h.Message) (*h.NeighborRefuse, error) {
-	if h.Rint(100) < c.w.config.failureRate {
+	if c.shouldFail() {
 		return nil, fmt.Errorf("request error")
 	}
 
@@ -51,7 +61,7 @@ func (c *Client) Send(m h.Message) (*h.NeighborRefuse, error) {
 	o := peer.recv(m)
 	if o != nil {
 		c.history = append(c.history, o)
-		if h.Rint(100) < c.w.config.failureRate {
+		if c.shouldFail() {
 			return nil, fmt.Errorf("response error")
 		}
 	}
