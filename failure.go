@@ -93,3 +93,15 @@ func (v *Hyparview) greedyShuffle() {
 		v.PromotePassive()
 	}
 }
+
+// repairAsymmetry handles a message from an unexpected sender
+func (v *Hyparview) repairAsymmetry(m Message) {
+	if v.Active.Contains(m.From()) {
+		return
+	}
+	if v.Active.IsFull() {
+		v.Send(NewDisconnect(m.From(), v.Self))
+		return
+	}
+	v.Active.Add(m.From())
+}

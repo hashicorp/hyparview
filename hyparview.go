@@ -66,8 +66,9 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) {
 
 // RecvForwardJoin processes a ForwardJoin following the paper
 func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
+	v.repairAsymmetry(r)
 	// if r.TTL == 0 || !v.Active.IsFull() {
-	if r.TTL == 0 || v.Active.Size() <= 1 {
+	if r.TTL == 0 || v.Active.IsEmptyBut(r.From()) {
 		if r.Join.Equal(v.Self) || v.Active.Contains(r.Join) {
 			return
 		}
@@ -181,6 +182,7 @@ func (v *Hyparview) SendShuffle(node *Node) *ShuffleRequest {
 
 // RecvShuffle processes a shuffle request. Paper
 func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
+	v.repairAsymmetry(r)
 	// If the active view size is one, it means that our only active peer is sender of
 	// this shuffle message
 	if r.TTL >= 0 && !v.Active.IsEmptyBut(r.From()) {
