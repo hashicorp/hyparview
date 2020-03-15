@@ -20,10 +20,10 @@ func simulation(c WorldConfig) *World {
 
 	// log.Printf("debug: connect all the nodes")
 	ns := w.randNodes()
-	boot := ns[0]
+	w.bootstrap = ns[0].Self
 	for _, me := range ns[1:] {
 		// boot := w.nodes[fmt.Sprintf("n%d", h.Rint(i))]
-		me.SendJoin(boot.Self)
+		me.SendJoin(w.bootstrap)
 		w.maybeShuffle()
 	}
 

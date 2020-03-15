@@ -36,7 +36,7 @@ func testSimulation(t *testing.T, i int, peers int) {
 		payloads:    30,
 		iteration:   i,
 		shuffleFreq: 30,
-		failureRate: 0,
+		failureRate: 02,
 		rounds:      40,
 	})
 
@@ -52,6 +52,7 @@ func testSimulation(t *testing.T, i int, peers int) {
 
 	// w.debugQueue()
 	w.plotSeed(seed)
+	w.plotBootstrapCount()
 	w.plotInDegree()
 	w.plotOutDegree()
 	w.plotGossip()
