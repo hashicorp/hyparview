@@ -8,12 +8,13 @@ import (
 
 type Client struct {
 	h.Hyparview
-	w        *World
-	history  []h.Message // debug history of messages
-	app      int         // final value we got
-	appHops  int         // final value's hops
-	appSeen  int         // if app == appSeen, we got every message
-	appWaste int         // count of app messages that didn't change the value
+	w              *World
+	history        []h.Message // debug history of messages
+	bootstrapCount int
+	app            int // final value we got
+	appHops        int // final value's hops
+	appSeen        int // if app == appSeen, we got every message
+	appWaste       int // count of app messages that didn't change the value
 }
 
 func makeClient(w *World, id string) *Client {
@@ -56,4 +57,10 @@ func (c *Client) Send(m h.Message) (*h.NeighborRefuse, error) {
 }
 
 func (c *Client) Failed(peer *h.Node) {
+}
+
+func (c *Client) Bootstrap() *h.Node {
+	c.bootstrapCount += 1
+	c.SendJoin(c.w.bootstrap)
+	return c.w.bootstrap
 }
