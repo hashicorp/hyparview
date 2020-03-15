@@ -214,7 +214,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	// Keep the sent passive peers
 	// addShuffle is going to destructively use this
 
-	v.addShuffle(r.From())
+	v.addShuffle(r.Origin)
 	for _, n := range r.Active {
 		v.addShuffle(n)
 	}
