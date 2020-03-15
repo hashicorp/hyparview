@@ -5,6 +5,7 @@ import (
 	"os"
 
 	h "github.com/hashicorp/hyparview"
+	"github.com/kr/pretty"
 )
 
 func (w *World) plotPath(file string) string {
@@ -41,6 +42,11 @@ func (w *World) Connected() error {
 		return nil
 	}
 
+	for _, n := range lost {
+		pretty.Log(n.Self, n.history)
+		break
+	}
+
 	return fmt.Errorf("%d connected, %d lost\n", len(w.nodes)-len(lost), len(lost))
 }
 
@@ -50,6 +56,7 @@ func (w *World) isSymmetric() error {
 		for _, p := range n.Active.Shuffled() {
 			if !w.get(p.ID).Active.Contains(n.Self) {
 				count++
+				break
 			}
 		}
 	}

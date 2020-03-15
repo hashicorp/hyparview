@@ -22,7 +22,7 @@ type sliceSender struct {
 	ms []Message
 }
 
-func (s *sliceSender) Send(m Message) (Message, error) {
+func (s *sliceSender) Send(m Message) (*NeighborRefuse, error) {
 	s.ms = append(s.ms, m)
 	return nil, nil
 }
@@ -126,4 +126,47 @@ func TestRecvForwardJoin(t *testing.T) {
 	fwd, ok := ms[0].(*ForwardJoinRequest)
 	require.True(t, ok)
 	require.Equal(t, 5, fwd.TTL)
+}
+
+func TestNeighborSymmetry(t *testing.T) {
+	s := map[string]*sliceSender{}
+	v := map[string]*Hyparview{}
+
+	for _, n := range []string{"a", "b", "c", "d"} {
+		s[n] = newSliceSender()
+		v[n] = CreateView(s[n], NewNode(n), 0)
+		v[n].Active.Max = 2
+		v[n].Passive.Max = 2
+	}
+
+	// Promote passive
+	v["a"].Passive.Add(v["b"].Self)
+	v["a"].PromotePassive()
+	for _, m := range s["a"].reset() {
+		v["b"].Recv(m)
+	}
+
+	require.Equal(t, 0, v["a"].Passive.Size())
+	require.Equal(t, v["a"].Self, v["b"].Active.Nodes[0])
+	require.Equal(t, v["b"].Self, v["a"].Active.Nodes[0])
+
+	for _, n := range []string{"a", "b"} {
+		v[n].Active.Add(v["c"].Self)
+		v["c"].Active.Add(v[n].Self)
+	}
+
+	// Active view overflows, sends a disconnect
+	v["a"].RecvJoin(NewJoin(v["a"].Self, NewNode("d")))
+	for _, m := range s["a"].reset() {
+		t := m.To().ID
+		v[t].Recv(m)
+	}
+
+	require.True(t, v["a"].Active.Contains(v["b"].Self))
+	require.True(t, v["a"].Active.Contains(v["d"].Self))
+
+	require.True(t, v["b"].Active.Contains(v["a"].Self))
+	require.True(t, v["b"].Active.Contains(v["c"].Self))
+
+	require.True(t, v["c"].Active.Contains(v["b"].Self))
 }

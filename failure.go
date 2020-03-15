@@ -3,7 +3,7 @@ package hyparview
 type Send interface {
 	// Send sends one message at a time to a peer. TODO simplify batching?
 	// send should use a timeout to detect blocking as failure
-	Send(Message) (Message, error)
+	Send(Message) (*NeighborRefuse, error)
 	// Failed is called after hyparview has handled the failure, to handle e.g.
 	// connection cleanup
 	Failed(*Node)
