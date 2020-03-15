@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kr/pretty"
 	"github.com/stretchr/testify/require"
 )
 
@@ -163,5 +162,11 @@ func TestNeighborSymmetry(t *testing.T) {
 		v[t].Recv(m)
 	}
 
-	pretty.Log(v["a"].Active.Nodes, v["b"].Active.Nodes, v["c"].Active.Nodes)
+	require.True(t, v["a"].Active.Contains(v["b"].Self))
+	require.True(t, v["a"].Active.Contains(v["d"].Self))
+
+	require.True(t, v["b"].Active.Contains(v["a"].Self))
+	require.True(t, v["b"].Active.Contains(v["c"].Self))
+
+	require.True(t, v["c"].Active.Contains(v["b"].Self))
 }
