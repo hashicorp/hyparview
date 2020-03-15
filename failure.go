@@ -45,6 +45,10 @@ func (v *Hyparview) Send(ms ...Message) {
 	}
 }
 
+func (v *Hyparview) Bootstrap() *Node {
+	return v.S.Bootstrap()
+}
+
 func (v *Hyparview) PromotePassive() *Node {
 	return v.PromotePassiveBut(nil)
 }
