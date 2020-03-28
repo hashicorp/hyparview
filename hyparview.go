@@ -191,7 +191,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 			if n.Equal(r.From()) {
 				continue
 			}
-			v.Send(NewShuffle(n, v.Self, r.From(), r.Active, r.Passive, r.TTL-1))
+			v.Send(NewShuffle(n, v.Self, r.Origin, r.Active, r.Passive, r.TTL-1))
 			break
 		}
 		return
@@ -209,7 +209,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 
 	// Send back l shuffled results
 	ps := v.Passive.Shuffled()[0:l]
-	v.Send(NewShuffleReply(r.From(), v.Self, ps))
+	v.Send(NewShuffleReply(r.Origin, v.Self, ps))
 
 	// Keep the sent passive peers
 	// addShuffle is going to destructively use this
