@@ -30,6 +30,10 @@ func (s *sliceSender) Send(m Message) (*NeighborRefuse, error) {
 func (s *sliceSender) Failed(n *Node) {
 }
 
+func (s *sliceSender) Bootstrap() *Node {
+	return nil
+}
+
 func (s *sliceSender) reset() (ms []Message) {
 	out := s.ms
 	s.ms = []Message{}

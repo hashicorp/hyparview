@@ -1,6 +1,7 @@
 package simulation
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -42,8 +43,12 @@ func (w *World) Connected() error {
 		return nil
 	}
 
+	// Log the history of lost nodes
+	f, _ := os.Create(w.plotPath("lost.log"))
+	defer f.Close()
+	wr := bufio.NewWriter(f)
 	for _, n := range lost {
-		pretty.Log(n.Self, n.history)
+		pretty.Fprintf(wr, "%# v\n%# v\n", n.Self, n.history)
 		break
 	}
 
@@ -71,6 +76,20 @@ func (w *World) plotSeed(seed int64) {
 	f, _ := os.Create(w.plotPath("seed"))
 	defer f.Close()
 	f.WriteString(fmt.Sprintf("%d\n", seed))
+}
+
+func (w *World) plotBootstrapCount() {
+	h := map[int]int{}
+	for _, n := range w.nodes {
+		h[n.bootstrapCount] += 1
+	}
+
+	f, _ := os.Create(w.plotPath("bootstrap"))
+	defer f.Close()
+
+	for boots, nodes := range h {
+		f.WriteString(fmt.Sprintf("%d %d\n", boots, nodes))
+	}
 }
 
 func (w *World) plotOutDegree() {

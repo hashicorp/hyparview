@@ -1,9 +1,12 @@
 package simulation
 
+import h "github.com/hashicorp/hyparview"
+
 type World struct {
 	config        *WorldConfig
 	nodes         map[string]*Client
 	morgue        map[string]*Client
+	bootstrap     *h.Node
 	totalMessages int
 	totalPayloads int
 
