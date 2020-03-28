@@ -67,6 +67,7 @@ func TestShuffleRecv(t *testing.T) {
 	req := &ShuffleRequest{
 		to:      ns[0],
 		from:    ns[1],
+		Origin:  ns[1],
 		Active:  ns[1:3],
 		Passive: ns[3:7],
 		TTL:     0,
