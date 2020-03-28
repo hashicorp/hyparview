@@ -13,11 +13,13 @@ func CreateViewPart(size int) *ViewPart {
 }
 
 func (v *ViewPart) IsEmpty() bool {
-	return len(v.Nodes) == 0
+	return len(v.Nodes) <= 1
 }
 
 func (v *ViewPart) IsEmptyBut(peer *Node) bool {
-	return len(v.Nodes) == 1 && peer.Equal(v.Nodes[0])
+	return v.IsEmpty() ||
+		(len(v.Nodes) == 1 &&
+			peer.Equal(v.Nodes[0]))
 }
 
 func (v *ViewPart) IsFull() bool {

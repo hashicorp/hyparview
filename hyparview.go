@@ -66,8 +66,9 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) {
 
 // RecvForwardJoin processes a ForwardJoin following the paper
 func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
+	v.repairAsymmetry(r)
 	// if r.TTL == 0 || !v.Active.IsFull() {
-	if r.TTL == 0 || v.Active.Size() <= 1 {
+	if r.TTL == 0 || v.Active.IsEmptyBut(r.From()) {
 		if r.Join.Equal(v.Self) || v.Active.Contains(r.Join) {
 			return
 		}
@@ -83,7 +84,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
 
 	// Forward to one not-sender active peer
 	for _, n := range v.Active.Shuffled() {
-		if n.Equal(r.From()) {
+		if n.Equal(r.From()) || n.Equal(r.Join) {
 			continue
 		}
 		v.Send(NewForwardJoin(n, v.Self, r.Join, r.TTL-1))
@@ -181,6 +182,7 @@ func (v *Hyparview) SendShuffle(node *Node) *ShuffleRequest {
 
 // RecvShuffle processes a shuffle request. Paper
 func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
+	v.repairAsymmetry(r)
 	// If the active view size is one, it means that our only active peer is sender of
 	// this shuffle message
 	if r.TTL >= 0 && !v.Active.IsEmptyBut(r.From()) {
@@ -189,7 +191,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 			if n.Equal(r.From()) {
 				continue
 			}
-			v.Send(NewShuffle(n, v.Self, r.From(), r.Active, r.Passive, r.TTL-1))
+			v.Send(NewShuffle(n, v.Self, r.Origin, r.Active, r.Passive, r.TTL-1))
 			break
 		}
 		return
@@ -207,18 +209,20 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 
 	// Send back l shuffled results
 	ps := v.Passive.Shuffled()[0:l]
-	v.Send(NewShuffleReply(r.From(), v.Self, ps))
+	v.Send(NewShuffleReply(r.Origin, v.Self, ps))
 
 	// Keep the sent passive peers
 	// addShuffle is going to destructively use this
 
-	v.addShuffle(r.From())
+	v.addShuffle(r.Origin)
 	for _, n := range r.Active {
 		v.addShuffle(n)
 	}
 	for _, n := range r.Passive {
 		v.addShuffle(n)
 	}
+
+	v.greedyShuffle()
 }
 
 // addShuffle processes one node to be added to the passive view. If the node is us or

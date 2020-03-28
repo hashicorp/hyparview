@@ -2,6 +2,7 @@ package hyparview
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -67,6 +68,7 @@ func TestShuffleRecv(t *testing.T) {
 	req := &ShuffleRequest{
 		to:      ns[0],
 		from:    ns[1],
+		Origin:  ns[1],
 		Active:  ns[1:3],
 		Passive: ns[3:7],
 		TTL:     0,
@@ -78,8 +80,8 @@ func TestShuffleRecv(t *testing.T) {
 
 	hv.RecvShuffle(req)
 	require.True(t, hv.Passive.Contains(ns[3]))
-	require.Equal(t, 1, hv.Active.Size())
-	require.Equal(t, 5, hv.Passive.Size())
+	require.Equal(t, 2, hv.Active.Size())
+	require.Equal(t, 4, hv.Passive.Size())
 }
 
 func TestViewMaxAdd(t *testing.T) {
@@ -110,19 +112,16 @@ func TestRecvForwardJoin(t *testing.T) {
 	b := NewNode("b")
 	c := NewNode("c")
 
+	// with repairAsymmetry, RecvForwardJoin adds the sender b to the active view. We
+	// don't forward the message because it's from `a` and Joining `b`, so there's no
+	// peer to forward to
 	v.AddActive(a)
 	m := NewForwardJoin(v.Self, b, a, 6)
 	v.RecvForwardJoin(m)
 	ms := s.reset()
 	require.Equal(t, 0, len(ms))
 
-	m = NewForwardJoin(v.Self, a, b, 6)
-	v.RecvForwardJoin(m)
-	ms = s.reset()
-	require.Equal(t, 1, len(ms))
-	_, ok := ms[0].(*NeighborRequest)
-	require.True(t, ok)
-
+	// with repairAsymmetry, RecvForwardJoin adds the sender a to the active view and so fo
 	m = NewForwardJoin(v.Self, a, c, 6)
 	v.RecvForwardJoin(m)
 	ms = s.reset()
@@ -130,6 +129,14 @@ func TestRecvForwardJoin(t *testing.T) {
 	fwd, ok := ms[0].(*ForwardJoinRequest)
 	require.True(t, ok)
 	require.Equal(t, 5, fwd.TTL)
+
+	// the ttl is exhausted, so add the peer and send them a neighbor request
+	m = NewForwardJoin(v.Self, a, c, 0)
+	v.RecvForwardJoin(m)
+	ms = s.reset()
+	require.Equal(t, 1, len(ms))
+	_, ok = ms[0].(*NeighborRequest)
+	require.True(t, ok)
 }
 
 func TestNeighborSymmetry(t *testing.T) {
@@ -159,18 +166,20 @@ func TestNeighborSymmetry(t *testing.T) {
 		v["c"].Active.Add(v[n].Self)
 	}
 
-	// Active view overflows, sends a disconnect
+	// Active view overflows, sends a disconnect. The disconnected peer is selected at
+	// random, so we need to seed a deterministic outcome
+	rand.Seed(0)
 	v["a"].RecvJoin(NewJoin(v["a"].Self, NewNode("d")))
 	for _, m := range s["a"].reset() {
 		t := m.To().ID
 		v[t].Recv(m)
 	}
 
-	require.True(t, v["a"].Active.Contains(v["b"].Self))
+	require.True(t, v["a"].Active.Contains(v["c"].Self))
 	require.True(t, v["a"].Active.Contains(v["d"].Self))
 
-	require.True(t, v["b"].Active.Contains(v["a"].Self))
 	require.True(t, v["b"].Active.Contains(v["c"].Self))
 
+	require.True(t, v["c"].Active.Contains(v["a"].Self))
 	require.True(t, v["c"].Active.Contains(v["b"].Self))
 }

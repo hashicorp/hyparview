@@ -86,3 +86,22 @@ func (v *Hyparview) PromotePassiveBut(peer *Node) *Node {
 	}
 	return nil
 }
+
+// greedyShuffle tries to populate our active view on RecvShuffle
+func (v *Hyparview) greedyShuffle() {
+	if !v.Active.IsFull() {
+		v.PromotePassive()
+	}
+}
+
+// repairAsymmetry handles a message from an unexpected sender
+func (v *Hyparview) repairAsymmetry(m Message) {
+	if v.Active.Contains(m.From()) {
+		return
+	}
+	if v.Active.IsFull() {
+		v.Send(NewDisconnect(m.From(), v.Self))
+		return
+	}
+	v.Active.Add(m.From())
+}
