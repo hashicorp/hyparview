@@ -16,13 +16,9 @@ See =data= for the data input. Plotting output is in =plot=
 
 ** Known bugs
 
-- The simulation shows that a small number of nodes are disconnected,
-  probably related to implementing failure correctly
-
-- On failure, hyparview should recover a new active peer from it's
-  passive view and send the failed message. This behavior is only
-  partially implemented in the simulator, so it tolerates failures on
-  the initial graph population very poorly
+- The simulation consistently shows a number of asymmetric links,
+  these would actually be repaired in a stable system that continued
+  to shuffle. The simulation should be extended to demonstrate that.
 
 * Related Topics for Improving the Approach
 
