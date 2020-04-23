@@ -96,12 +96,13 @@ func (v *Hyparview) greedyShuffle() {
 
 // repairAsymmetry handles a message from an unexpected sender
 func (v *Hyparview) repairAsymmetry(m Message) {
-	if v.Active.Contains(m.From()) {
+	peer := m.From()
+	if v.Self.Equal(peer) || v.Active.Contains(peer) {
 		return
 	}
 	if v.Active.IsFull() {
-		v.Send(NewDisconnect(m.From(), v.Self))
+		v.Send(NewDisconnect(peer, v.Self))
 		return
 	}
-	v.Active.Add(m.From())
+	v.Active.Add(peer)
 }
