@@ -10,7 +10,8 @@
 * Running The Simulation
 
 =brew install gnuplot=
-=make=
+
+=make simulation=
 
 See =data= for the data input. Plotting output is in =plot=
 
@@ -19,6 +20,10 @@ See =data= for the data input. Plotting output is in =plot=
 - The simulation consistently shows a number of asymmetric links,
   these would actually be repaired in a stable system that continued
   to shuffle. The simulation should be extended to demonstrate that.
+
+- When running with only a single send attempt, failure recovery
+  causes a stack overflow. The simulator send plugin should use an
+  external stack that doesn't overflow so easily
 
 * Related Topics for Improving the Approach
 
