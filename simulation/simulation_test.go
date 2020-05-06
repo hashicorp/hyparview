@@ -37,7 +37,7 @@ func testSimulation(t *testing.T, i int, peers int) {
 		iteration:   i,
 		shuffleFreq: 30,
 		failureRate: 10,
-		rounds:      40,
+		rounds:      200,
 	})
 
 	err := w.Connected()

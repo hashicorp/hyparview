@@ -2,7 +2,6 @@ package simulation
 
 import (
 	"fmt"
-	"log"
 )
 
 func simulation(c WorldConfig) *World {
@@ -27,7 +26,7 @@ func simulation(c WorldConfig) *World {
 		w.maybeShuffle()
 	}
 
-	log.Printf("debug: send some gossip messages")
+	// log.Printf("debug: send some gossip messages")
 	// avoid panic when rounds > peers
 	rounds := c.payloads
 	if rounds > c.peers {

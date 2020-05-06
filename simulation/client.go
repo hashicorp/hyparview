@@ -43,7 +43,7 @@ func (c *Client) recv(m h.Message) *h.NeighborRefuse {
 func (c *Client) shouldFail() bool {
 	// return h.Rint(100) < c.w.config.failureRate
 
-	// Retry once
+	// Retry
 	for i := 2; i > 0; i-- {
 		if h.Rint(100) > c.w.config.failureRate {
 			return false
