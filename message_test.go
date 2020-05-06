@@ -7,9 +7,9 @@ import (
 )
 
 func TestAssocTo(t *testing.T) {
-	a := &Node{ID: "a"}
-	b := &Node{ID: "b"}
-	c := &Node{ID: "c"}
+	a := NewNode("a")
+	b := NewNode("b")
+	c := NewNode("c")
 	m := NewJoin(a, b)
 	n := m.AssocTo(c)
 

@@ -4,100 +4,100 @@
 
 package hyparview
 
-func (r *JoinRequest) To() *Node {
+func (r *JoinRequest) To() Node {
 	return r.to
 }
 
-func (r *JoinRequest) AssocTo(n *Node) Message {
+func (r *JoinRequest) AssocTo(n Node) Message {
 	o := *r
 	o.to = n
 	return &o
 }
 
-func (r *JoinRequest) From() *Node {
+func (r *JoinRequest) From() Node {
 	return r.from
 }
 
-func (r *ForwardJoinRequest) To() *Node {
+func (r *ForwardJoinRequest) To() Node {
 	return r.to
 }
 
-func (r *ForwardJoinRequest) AssocTo(n *Node) Message {
+func (r *ForwardJoinRequest) AssocTo(n Node) Message {
 	o := *r
 	o.to = n
 	return &o
 }
 
-func (r *ForwardJoinRequest) From() *Node {
+func (r *ForwardJoinRequest) From() Node {
 	return r.from
 }
 
-func (r *DisconnectRequest) To() *Node {
+func (r *DisconnectRequest) To() Node {
 	return r.to
 }
 
-func (r *DisconnectRequest) AssocTo(n *Node) Message {
+func (r *DisconnectRequest) AssocTo(n Node) Message {
 	o := *r
 	o.to = n
 	return &o
 }
 
-func (r *DisconnectRequest) From() *Node {
+func (r *DisconnectRequest) From() Node {
 	return r.from
 }
 
-func (r *NeighborRequest) To() *Node {
+func (r *NeighborRequest) To() Node {
 	return r.to
 }
 
-func (r *NeighborRequest) AssocTo(n *Node) Message {
+func (r *NeighborRequest) AssocTo(n Node) Message {
 	o := *r
 	o.to = n
 	return &o
 }
 
-func (r *NeighborRequest) From() *Node {
+func (r *NeighborRequest) From() Node {
 	return r.from
 }
 
-func (r *NeighborRefuse) To() *Node {
+func (r *NeighborRefuse) To() Node {
 	return r.to
 }
 
-func (r *NeighborRefuse) AssocTo(n *Node) Message {
+func (r *NeighborRefuse) AssocTo(n Node) Message {
 	o := *r
 	o.to = n
 	return &o
 }
 
-func (r *NeighborRefuse) From() *Node {
+func (r *NeighborRefuse) From() Node {
 	return r.from
 }
 
-func (r *ShuffleRequest) To() *Node {
+func (r *ShuffleRequest) To() Node {
 	return r.to
 }
 
-func (r *ShuffleRequest) AssocTo(n *Node) Message {
+func (r *ShuffleRequest) AssocTo(n Node) Message {
 	o := *r
 	o.to = n
 	return &o
 }
 
-func (r *ShuffleRequest) From() *Node {
+func (r *ShuffleRequest) From() Node {
 	return r.from
 }
 
-func (r *ShuffleReply) To() *Node {
+func (r *ShuffleReply) To() Node {
 	return r.to
 }
 
-func (r *ShuffleReply) AssocTo(n *Node) Message {
+func (r *ShuffleReply) AssocTo(n Node) Message {
 	o := *r
 	o.to = n
 	return &o
 }
 
-func (r *ShuffleReply) From() *Node {
+func (r *ShuffleReply) From() Node {
 	return r.from
 }

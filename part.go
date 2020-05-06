@@ -1,13 +1,13 @@
 package hyparview
 
 type ViewPart struct {
-	Nodes []*Node
+	Nodes []Node
 	Max   int
 }
 
 func CreateViewPart(size int) *ViewPart {
 	return &ViewPart{
-		Nodes: []*Node{},
+		Nodes: []Node{},
 		Max:   size,
 	}
 }
@@ -16,10 +16,10 @@ func (v *ViewPart) IsEmpty() bool {
 	return len(v.Nodes) <= 1
 }
 
-func (v *ViewPart) IsEmptyBut(peer *Node) bool {
+func (v *ViewPart) IsEmptyBut(peer Node) bool {
 	return v.IsEmpty() ||
 		(len(v.Nodes) == 1 &&
-			peer.Equal(v.Nodes[0]))
+			EqualNode(peer, v.Nodes[0]))
 }
 
 func (v *ViewPart) IsFull() bool {
@@ -32,7 +32,7 @@ func (v *ViewPart) Size() int {
 
 func (v *ViewPart) Copy() *ViewPart {
 	w := *v
-	nodes := make([]*Node, len(v.Nodes))
+	nodes := make([]Node, len(v.Nodes))
 	copy(nodes, v.Nodes)
 	w.Nodes = nodes
 	return &w
@@ -48,7 +48,7 @@ func (v *ViewPart) Equal(w *ViewPart) bool {
 setwise:
 	for _, n := range v.Nodes {
 		for _, m := range w.Nodes {
-			if n.Equal(m) {
+			if EqualNode(n, m) {
 				continue setwise
 			}
 		}
@@ -57,7 +57,7 @@ setwise:
 	return true
 }
 
-func (v *ViewPart) Add(n *Node) {
+func (v *ViewPart) Add(n Node) {
 	if !v.Contains(n) {
 		v.Nodes = append(v.Nodes, n)
 	}
@@ -68,7 +68,7 @@ func (v *ViewPart) DelIndex(i int) {
 	v.Nodes = append(ns[:i], ns[i+1:]...)
 }
 
-func (v *ViewPart) DelNode(n *Node) bool {
+func (v *ViewPart) DelNode(n Node) bool {
 	idx := v.ContainsIndex(n)
 	if idx >= 0 {
 		v.DelIndex(idx)
@@ -77,13 +77,13 @@ func (v *ViewPart) DelNode(n *Node) bool {
 	return false
 }
 
-func (v *ViewPart) GetIndex(i int) *Node {
+func (v *ViewPart) GetIndex(i int) Node {
 	return v.Nodes[i]
 }
 
-func (v *ViewPart) Shuffled() []*Node {
+func (v *ViewPart) Shuffled() []Node {
 	l := len(v.Nodes)
-	ns := make([]*Node, l)
+	ns := make([]Node, l)
 	// Start with a copy, fischer-yates needs to operate destructively
 	copy(ns, v.Nodes)
 	for i := l - 1; i > 0; i-- {
@@ -97,19 +97,19 @@ func (v *ViewPart) RandIndex() int {
 	return Rint(len(v.Nodes) - 1)
 }
 
-func (v *ViewPart) RandNode() *Node {
+func (v *ViewPart) RandNode() Node {
 	return v.Nodes[v.RandIndex()]
 }
 
-func (v *ViewPart) ContainsIndex(n *Node) int {
+func (v *ViewPart) ContainsIndex(n Node) int {
 	for i, m := range v.Nodes {
-		if m.Equal(n) {
+		if EqualNode(n, m) {
 			return i
 		}
 	}
 	return -1
 }
 
-func (v *ViewPart) Contains(n *Node) bool {
+func (v *ViewPart) Contains(n Node) bool {
 	return v.ContainsIndex(n) >= 0
 }

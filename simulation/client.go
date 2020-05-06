@@ -17,8 +17,8 @@ type Client struct {
 	appWaste       int // count of app messages that didn't change the value
 }
 
-func makeClient(w *World, id string) *Client {
-	n := &h.Node{ID: id, Addr: id}
+func makeClient(w *World, addr string) *Client {
+	n := h.NewNode(addr)
 	v := h.CreateView(nil, n, 0)
 	c := &Client{
 		Hyparview: *v,
@@ -59,7 +59,7 @@ func (c *Client) Send(m h.Message) (*h.NeighborRefuse, error) {
 	}
 
 	c.history = append(c.history, m)
-	peer := c.w.get(m.To().ID)
+	peer := c.w.get(m.To().Addr())
 	o := peer.recv(m)
 	if o != nil {
 		c.history = append(c.history, o)
@@ -71,10 +71,10 @@ func (c *Client) Send(m h.Message) (*h.NeighborRefuse, error) {
 	return o, nil
 }
 
-func (c *Client) Failed(peer *h.Node) {
+func (c *Client) Failed(peer h.Node) {
 }
 
-func (c *Client) Bootstrap() *h.Node {
+func (c *Client) Bootstrap() h.Node {
 	c.bootstrapCount += 1
 	c.SendJoin(c.w.bootstrap)
 	return c.w.bootstrap

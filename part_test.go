@@ -26,7 +26,7 @@ func TestContains(t *testing.T) {
 
 	v.DelNode(n)
 
-	require.Equal(t, "a", v.Nodes[0].ID)
-	require.Equal(t, "c", v.Nodes[1].ID)
-	require.Equal(t, "e", v.Nodes[2].ID)
+	require.Equal(t, "a", v.Nodes[0].Addr())
+	require.Equal(t, "c", v.Nodes[1].Addr())
+	require.Equal(t, "e", v.Nodes[2].Addr())
 }

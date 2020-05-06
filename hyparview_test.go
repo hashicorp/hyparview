@@ -8,12 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func makeNodes(n int) []*Node {
-	ns := make([]*Node, n)
+func makeNodes(n int) []Node {
+	ns := make([]Node, n)
 	for i := 0; i < n; i++ {
-		ns[i] = &Node{
-			ID:   fmt.Sprintf("127.0.0.1:1000%d", i),
-			Addr: fmt.Sprintf("127.0.0.1:1000%d", i),
+		ns[i] = &node{
+			addr: fmt.Sprintf("127.0.0.1:1000%d", i),
 		}
 	}
 	return ns
@@ -28,10 +27,10 @@ func (s *sliceSender) Send(m Message) (*NeighborRefuse, error) {
 	return nil, nil
 }
 
-func (s *sliceSender) Failed(n *Node) {
+func (s *sliceSender) Failed(n Node) {
 }
 
-func (s *sliceSender) Bootstrap() *Node {
+func (s *sliceSender) Bootstrap() Node {
 	return nil
 }
 
@@ -47,7 +46,7 @@ func newSliceSender() *sliceSender {
 	return s
 }
 
-func testView(count int) (*Hyparview, []*Node) {
+func testView(count int) (*Hyparview, []Node) {
 	ns := makeNodes(count)
 	hv := CreateView(newSliceSender(), ns[0], 0)
 	return hv, ns
@@ -174,7 +173,7 @@ func TestNeighborSymmetry(t *testing.T) {
 	rand.Seed(0)
 	v["a"].RecvJoin(NewJoin(v["a"].Self, NewNode("d")))
 	for _, m := range s["a"].reset() {
-		t := m.To().ID
+		t := m.To().Addr()
 		v[t].Recv(m)
 	}
 

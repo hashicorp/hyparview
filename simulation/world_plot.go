@@ -19,20 +19,20 @@ func (w *World) Connected() error {
 		lost[k] = v
 	}
 
-	var lp func(*h.Node)
-	lp = func(n *h.Node) {
-		if _, ok := lost[n.ID]; !ok {
+	var lp func(h.Node)
+	lp = func(n h.Node) {
+		if _, ok := lost[n.Addr()]; !ok {
 			return
 		}
 
-		delete(lost, n.ID)
-		for _, m := range w.get(n.ID).Active.Shuffled() {
+		delete(lost, n.Addr())
+		for _, m := range w.get(n.Addr()).Active.Shuffled() {
 			lp(m)
 		}
 	}
 
 	// I hate that this is lp(first(nodes))
-	var start *h.Node
+	var start h.Node
 	for _, v := range w.nodes {
 		start = v.Self
 		break
@@ -59,7 +59,7 @@ func (w *World) isSymmetric() error {
 	count := 0
 	for _, n := range w.nodes {
 		for _, p := range n.Active.Shuffled() {
-			if !w.get(p.ID).Active.Contains(n.Self) {
+			if !w.get(p.Addr()).Active.Contains(n.Self) {
 				count++
 				break
 			}
@@ -96,7 +96,7 @@ func (w *World) plotOutDegree() {
 	plot := func(ns func(*h.Hyparview) int, path string) {
 		act := map[string]int{}
 		for _, n := range w.nodes {
-			act[n.Self.ID] = ns(&n.Hyparview)
+			act[n.Self.Addr()] = ns(&n.Hyparview)
 		}
 
 		max := 0
@@ -128,12 +128,12 @@ func (w *World) plotOutDegree() {
 }
 
 func (w *World) plotInDegree() {
-	plot := func(ns func(*h.Hyparview) []*h.Node, path string) {
+	plot := func(ns func(*h.Hyparview) []h.Node, path string) {
 		act := map[string]int{}
 		for _, v := range w.nodes {
 			for _, n := range ns(&v.Hyparview) {
 				// Count in-degree
-				act[n.ID] += 1
+				act[n.Addr()] += 1
 			}
 		}
 
@@ -160,8 +160,8 @@ func (w *World) plotInDegree() {
 	}
 	af := w.plotPath("in-active")
 	pf := w.plotPath("in-passive")
-	plot(func(v *h.Hyparview) []*h.Node { return v.Active.Nodes }, af)
-	plot(func(v *h.Hyparview) []*h.Node { return v.Passive.Nodes }, pf)
+	plot(func(v *h.Hyparview) []h.Node { return v.Active.Nodes }, af)
+	plot(func(v *h.Hyparview) []h.Node { return v.Passive.Nodes }, pf)
 }
 
 type gossipRound struct {

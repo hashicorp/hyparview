@@ -6,21 +6,21 @@ type Send interface {
 	Send(Message) (*NeighborRefuse, error)
 	// Failed is called after hyparview has handled the failure, to handle e.g.
 	// connection cleanup
-	Failed(*Node)
+	Failed(Node)
 	// Bootstrap sends a join to some server, discovered by some external consideration
-	Bootstrap() *Node
+	Bootstrap() Node
 }
 
 // Send wraps the S.Send sender in appropriate error handling
 func (v *Hyparview) Send(ms ...Message) {
-	subs := map[string]*Node{}
+	subs := map[string]Node{}
 
 	for i := 0; i < len(ms); {
 		m := ms[i]
 		n := m.To()
 
 		// Send messages to the replacement node, if we have one
-		if sub, ok := subs[n.ID]; ok {
+		if sub, ok := subs[n.Addr()]; ok {
 			m = m.AssocTo(sub)
 		}
 
@@ -37,7 +37,7 @@ func (v *Hyparview) Send(ms ...Message) {
 				sub = v.S.Bootstrap()
 			}
 
-			subs[n.ID] = sub
+			subs[n.Addr()] = sub
 		} else {
 			// On failure, retry the failed message with the replacement server
 			i++
@@ -45,19 +45,19 @@ func (v *Hyparview) Send(ms ...Message) {
 	}
 }
 
-func (v *Hyparview) Bootstrap() *Node {
+func (v *Hyparview) Bootstrap() Node {
 	return v.S.Bootstrap()
 }
 
-func (v *Hyparview) PromotePassive() *Node {
+func (v *Hyparview) PromotePassive() Node {
 	return v.PromotePassiveBut(nil)
 }
 
-func (v *Hyparview) PromotePassiveBut(peer *Node) *Node {
+func (v *Hyparview) PromotePassiveBut(peer Node) Node {
 	pri := v.Active.IsEmpty()
 
 	for _, n := range v.Passive.Shuffled() {
-		if n.Equal(peer) {
+		if EqualNode(n, peer) {
 			continue
 		}
 
@@ -97,7 +97,7 @@ func (v *Hyparview) greedyShuffle() {
 // repairAsymmetry handles a message from an unexpected sender
 func (v *Hyparview) repairAsymmetry(m Message) {
 	peer := m.From()
-	if v.Self.Equal(peer) || v.Active.Contains(peer) {
+	if EqualNode(v.Self, peer) || v.Active.Contains(peer) {
 		return
 	}
 	if v.Active.IsFull() {

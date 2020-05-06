@@ -17,14 +17,14 @@ type Hyparview struct {
 	S       Send
 	Active  *ViewPart
 	Passive *ViewPart
-	Self    *Node
+	Self    Node
 	// The passive window peers sent in the last shuffle request
-	LastShuffle []*Node
+	LastShuffle []Node
 }
 
 // CreateView creates the view. Configuration is recommendations based on the cluster size
 // n. Does not start any process.
-func CreateView(s Send, self *Node, n int) *Hyparview {
+func CreateView(s Send, self Node, n int) *Hyparview {
 	active := 5
 	passive := 30
 
@@ -45,7 +45,7 @@ func CreateView(s Send, self *Node, n int) *Hyparview {
 	}
 }
 
-func (v *Hyparview) SendJoin(peer *Node) {
+func (v *Hyparview) SendJoin(peer Node) {
 	// Usually on run at bootstrap, where this will never produce disconnect messages
 	v.AddActive(peer)
 	v.Send(NewJoin(peer, v.Self))
@@ -57,7 +57,7 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) {
 
 	// Forward to all active peers
 	for _, n := range v.Active.Nodes {
-		if n.Equal(r.From()) {
+		if EqualNode(n, r.From()) {
 			continue
 		}
 		v.Send(NewForwardJoin(n, v.Self, r.From(), v.RWL.Active))
@@ -69,7 +69,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
 	v.repairAsymmetry(r)
 	// if r.TTL == 0 || !v.Active.IsFull() {
 	if r.TTL == 0 || v.Active.IsEmptyBut(r.From()) {
-		if r.Join.Equal(v.Self) || v.Active.Contains(r.Join) {
+		if EqualNode(r.Join, v.Self) || v.Active.Contains(r.Join) {
 			return
 		}
 
@@ -84,7 +84,7 @@ func (v *Hyparview) RecvForwardJoin(r *ForwardJoinRequest) {
 
 	// Forward to one not-sender active peer
 	for _, n := range v.Active.Shuffled() {
-		if n.Equal(r.From()) || n.Equal(r.Join) {
+		if EqualNode(n, r.From()) || EqualNode(n, r.Join) {
 			continue
 		}
 		v.Send(NewForwardJoin(n, v.Self, r.Join, r.TTL-1))
@@ -104,8 +104,8 @@ func (v *Hyparview) DropRandActive() {
 
 // AddActive adds a node to the active view, possibly dropping an active peer to make room.
 // Paper
-func (v *Hyparview) AddActive(node *Node) {
-	if node.Equal(v.Self) || v.Active.Contains(node) {
+func (v *Hyparview) AddActive(node Node) {
+	if EqualNode(node, v.Self) || v.Active.Contains(node) {
 		return
 	}
 
@@ -118,8 +118,8 @@ func (v *Hyparview) AddActive(node *Node) {
 
 // AddPassive adds a node to the passive view, possibly dropping a passive peer to make
 // room. Paper
-func (v *Hyparview) AddPassive(node *Node) {
-	if node.Equal(v.Self) ||
+func (v *Hyparview) AddPassive(node Node) {
+	if EqualNode(node, v.Self) ||
 		v.Active.Contains(node) ||
 		v.Passive.Contains(node) {
 		return
@@ -134,7 +134,7 @@ func (v *Hyparview) AddPassive(node *Node) {
 }
 
 // DelPassive is a helper function to delete the node from the passive view
-func (v *Hyparview) DelPassive(node *Node) {
+func (v *Hyparview) DelPassive(node Node) {
 	idx := v.Passive.ContainsIndex(node)
 	if idx >= 0 {
 		v.Passive.DelIndex(idx)
@@ -172,7 +172,7 @@ func (v *Hyparview) RecvNeighbor(r *NeighborRequest) *NeighborRefuse {
 }
 
 // SendShuffle creates and sends a shuffle request to maintain the passive view
-func (v *Hyparview) SendShuffle(node *Node) *ShuffleRequest {
+func (v *Hyparview) SendShuffle(node Node) *ShuffleRequest {
 	as := v.Active.Shuffled()[:min(v.ShuffleActive, v.Active.Size())]
 	ps := v.Passive.Shuffled()[:min(v.ShufflePassive, v.Passive.Size())]
 	v.LastShuffle = ps
@@ -187,7 +187,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	if r.TTL >= 0 && !v.Active.IsEmptyBut(r.From()) {
 		// Forward to one active non-sender
 		for _, n := range v.Active.Shuffled() {
-			if n.Equal(r.From()) || n.Equal(r.Origin) {
+			if EqualNode(n, r.From()) || EqualNode(n, r.Origin) {
 				continue
 			}
 			v.Send(NewShuffle(n, v.Self, r.Origin, r.Active, r.Passive, r.TTL-1))
@@ -224,8 +224,8 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 // addShuffle processes one node to be added to the passive view. If the node is us or
 // otherwise known, ignore it. If passive is full, eject first one of the nodes we sent then
 // a node at random to make room. Changes the list of exchanged peers in place
-func (v *Hyparview) addShuffle(n *Node, exchanged []*Node) {
-	if n.Equal(v.Self) || v.Active.Contains(n) || v.Passive.Contains(n) {
+func (v *Hyparview) addShuffle(n Node, exchanged []Node) {
+	if EqualNode(n, v.Self) || v.Active.Contains(n) || v.Passive.Contains(n) {
 		return
 	}
 
@@ -281,7 +281,7 @@ func (v *Hyparview) Recv(m Message) *NeighborRefuse {
 }
 
 // Peer returns a random active peer
-func (v *Hyparview) Peer() *Node {
+func (v *Hyparview) Peer() Node {
 	if v.Active.IsEmpty() {
 		return nil
 	}
