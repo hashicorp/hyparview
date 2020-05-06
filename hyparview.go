@@ -171,8 +171,7 @@ func (v *Hyparview) RecvNeighbor(r *NeighborRequest) *NeighborRefuse {
 	return nil
 }
 
-// SendShuffle creates the periodic state to mark and message for maintaining the passive
-// view. Paper
+// SendShuffle creates and sends a shuffle request to maintain the passive view
 func (v *Hyparview) SendShuffle(node *Node) *ShuffleRequest {
 	as := v.Active.Shuffled()[:min(v.ShuffleActive, v.Active.Size())]
 	ps := v.Passive.Shuffled()[:min(v.ShufflePassive, v.Passive.Size())]
@@ -188,7 +187,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	if r.TTL >= 0 && !v.Active.IsEmptyBut(r.From()) {
 		// Forward to one active non-sender
 		for _, n := range v.Active.Shuffled() {
-			if n.Equal(r.From()) {
+			if n.Equal(r.From()) || n.Equal(r.Origin) {
 				continue
 			}
 			v.Send(NewShuffle(n, v.Self, r.Origin, r.Active, r.Passive, r.TTL-1))
@@ -211,24 +210,21 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	ps := v.Passive.Shuffled()[0:l]
 	v.Send(NewShuffleReply(r.Origin, v.Self, ps))
 
-	// Keep the sent passive peers
-	// addShuffle is going to destructively use this
-
-	v.addShuffle(r.Origin)
+	v.addShuffle(r.Origin, ps)
 	for _, n := range r.Active {
-		v.addShuffle(n)
+		v.addShuffle(n, ps)
 	}
 	for _, n := range r.Passive {
-		v.addShuffle(n)
+		v.addShuffle(n, ps)
 	}
 
-	v.greedyShuffle()
+	// v.greedyShuffle()
 }
 
 // addShuffle processes one node to be added to the passive view. If the node is us or
 // otherwise known, ignore it. If passive is full, eject first one of the nodes we sent then
-// a node at random to make room.
-func (v *Hyparview) addShuffle(n *Node) {
+// a node at random to make room. Changes the list of exchanged peers in place
+func (v *Hyparview) addShuffle(n *Node, exchanged []*Node) {
 	if n.Equal(v.Self) || v.Active.Contains(n) || v.Passive.Contains(n) {
 		return
 	}
@@ -236,9 +232,9 @@ func (v *Hyparview) addShuffle(n *Node) {
 	if v.Passive.IsFull() {
 		idx := -1
 
-		for len(v.LastShuffle) > 0 && idx < 0 {
-			idx = v.Passive.ContainsIndex(v.LastShuffle[0])
-			v.LastShuffle = v.LastShuffle[1:]
+		for len(exchanged) > 0 && idx < 0 {
+			idx = v.Passive.ContainsIndex(exchanged[0])
+			exchanged = exchanged[1:]
 		}
 
 		if idx < 0 {
@@ -253,7 +249,7 @@ func (v *Hyparview) addShuffle(n *Node) {
 
 func (v *Hyparview) RecvShuffleReply(r *ShuffleReply) {
 	for _, n := range r.Passive {
-		v.addShuffle(n)
+		v.addShuffle(n, v.LastShuffle)
 	}
 }
 

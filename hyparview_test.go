@@ -80,8 +80,11 @@ func TestShuffleRecv(t *testing.T) {
 
 	hv.RecvShuffle(req)
 	require.True(t, hv.Passive.Contains(ns[3]))
-	require.Equal(t, 2, hv.Active.Size())
-	require.Equal(t, 4, hv.Passive.Size())
+	// still only 1, which was added explicitly
+	require.Equal(t, 1, hv.Active.Size())
+	require.False(t, hv.Passive.Contains(ns[1])) // excluded, it's in active view
+	require.True(t, hv.Passive.Contains(ns[2]))
+	require.Equal(t, 1+4, hv.Passive.Size()) // 4 more from Passive
 }
 
 func TestViewMaxAdd(t *testing.T) {
