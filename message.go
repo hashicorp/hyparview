@@ -2,9 +2,9 @@ package hyparview
 
 // Message allows clients to redefine hyparview messages to carry additional meta information
 type Message interface {
-	To() *Node
-	AssocTo(*Node) Message
-	From() *Node
+	To() Node
+	AssocTo(Node) Message
+	From() Node
 }
 
 // Methods that can be generated should be added to message.go.genny, and build by `make
@@ -17,11 +17,11 @@ const (
 )
 
 type JoinRequest struct {
-	to   *Node
-	from *Node
+	to   Node
+	from Node
 }
 
-func NewJoin(to *Node, from *Node) *JoinRequest {
+func NewJoin(to Node, from Node) *JoinRequest {
 	return &JoinRequest{
 		to:   to,
 		from: from,
@@ -29,13 +29,13 @@ func NewJoin(to *Node, from *Node) *JoinRequest {
 }
 
 type ForwardJoinRequest struct {
-	to   *Node
-	from *Node
-	Join *Node
+	to   Node
+	from Node
+	Join Node
 	TTL  int
 }
 
-func NewForwardJoin(to *Node, from *Node, join *Node, ttl int) *ForwardJoinRequest {
+func NewForwardJoin(to Node, from Node, join Node, ttl int) *ForwardJoinRequest {
 	return &ForwardJoinRequest{
 		to:   to,
 		from: from,
@@ -45,11 +45,11 @@ func NewForwardJoin(to *Node, from *Node, join *Node, ttl int) *ForwardJoinReque
 }
 
 type DisconnectRequest struct {
-	to   *Node
-	from *Node
+	to   Node
+	from Node
 }
 
-func NewDisconnect(to *Node, from *Node) *DisconnectRequest {
+func NewDisconnect(to Node, from Node) *DisconnectRequest {
 	return &DisconnectRequest{
 		to:   to,
 		from: from,
@@ -57,13 +57,13 @@ func NewDisconnect(to *Node, from *Node) *DisconnectRequest {
 }
 
 type NeighborRequest struct {
-	to       *Node
-	from     *Node
+	to       Node
+	from     Node
 	Priority bool
 	Join     bool
 }
 
-func NewNeighbor(to *Node, from *Node, priority bool) *NeighborRequest {
+func NewNeighbor(to Node, from Node, priority bool) *NeighborRequest {
 	return &NeighborRequest{
 		to:       to,
 		from:     from,
@@ -71,7 +71,7 @@ func NewNeighbor(to *Node, from *Node, priority bool) *NeighborRequest {
 	}
 }
 
-func NewNeighborJoin(to *Node, from *Node) *NeighborRequest {
+func NewNeighborJoin(to Node, from Node) *NeighborRequest {
 	return &NeighborRequest{
 		to:       to,
 		from:     from,
@@ -81,11 +81,11 @@ func NewNeighborJoin(to *Node, from *Node) *NeighborRequest {
 }
 
 type NeighborRefuse struct {
-	to   *Node
-	from *Node
+	to   Node
+	from Node
 }
 
-func NewNeighborRefuse(to *Node, from *Node) *NeighborRefuse {
+func NewNeighborRefuse(to Node, from Node) *NeighborRefuse {
 	return &NeighborRefuse{
 		to:   to,
 		from: from,
@@ -93,15 +93,15 @@ func NewNeighborRefuse(to *Node, from *Node) *NeighborRefuse {
 }
 
 type ShuffleRequest struct {
-	to      *Node
-	from    *Node
-	Origin  *Node
-	Active  []*Node
-	Passive []*Node
+	to      Node
+	from    Node
+	Origin  Node
+	Active  []Node
+	Passive []Node
 	TTL     int
 }
 
-func NewShuffle(to, from, origin *Node, active, passive []*Node, ttl int) *ShuffleRequest {
+func NewShuffle(to, from, origin Node, active, passive []Node, ttl int) *ShuffleRequest {
 	return &ShuffleRequest{
 		to:      to,
 		from:    from,
@@ -113,12 +113,12 @@ func NewShuffle(to, from, origin *Node, active, passive []*Node, ttl int) *Shuff
 }
 
 type ShuffleReply struct {
-	to      *Node
-	from    *Node
-	Passive []*Node
+	to      Node
+	from    Node
+	Passive []Node
 }
 
-func NewShuffleReply(to *Node, from *Node, passive []*Node) *ShuffleReply {
+func NewShuffleReply(to Node, from Node, passive []Node) *ShuffleReply {
 	return &ShuffleReply{
 		to:      to,
 		from:    from,

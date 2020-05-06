@@ -6,7 +6,7 @@ type World struct {
 	config        *WorldConfig
 	nodes         map[string]*Client
 	morgue        map[string]*Client
-	bootstrap     *h.Node
+	bootstrap     h.Node
 	totalMessages int
 	totalPayloads int
 

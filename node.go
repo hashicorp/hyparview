@@ -1,20 +1,24 @@
 package hyparview
 
-type Node struct {
-	ID   string
-	Addr string
+type Node interface {
+	Addr() string
 }
 
-func NewNode(addr string) *Node {
-	return &Node{
-		ID:   addr,
-		Addr: addr,
-	}
+type node struct {
+	addr string
 }
 
-func (n *Node) Equal(m *Node) bool {
+func (n *node) Addr() string {
+	return n.addr
+}
+
+func NewNode(addr string) Node {
+	return &node{addr: addr}
+}
+
+func EqualNode(n, m Node) bool {
 	if n == nil || m == nil {
 		return n == m
 	}
-	return n.ID == m.ID // FIXME both?
+	return n.Addr() == m.Addr()
 }

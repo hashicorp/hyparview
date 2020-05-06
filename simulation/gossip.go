@@ -3,24 +3,24 @@ package simulation
 import h "github.com/hashicorp/hyparview"
 
 type gossip struct {
-	to   *h.Node
-	from *h.Node
+	to   h.Node
+	from h.Node
 	app  int
 	hops int
 }
 
 // Implement the message interface for gossip
-func (r *gossip) To() *h.Node {
+func (r *gossip) To() h.Node {
 	return r.to
 }
 
-func (r *gossip) AssocTo(n *h.Node) h.Message {
+func (r *gossip) AssocTo(n h.Node) h.Message {
 	o := *r
 	o.to = n
 	return &o
 }
 
-func (r *gossip) From() *h.Node {
+func (r *gossip) From() h.Node {
 	return r.from
 }
 
