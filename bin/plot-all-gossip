@@ -2,5 +2,5 @@
 set -x
 for i in `seq 1 $SIMULATION_COUNT`; do
     n=`printf "%04d" $i`
-    ./bin/plot-gossip-one "data/$n-gossip" > "plot/gossip-$n.png"
+    ./bin/plot-stacked "data/$n-gossip" > "plot/gossip-$n.png"
 done
