@@ -1,0 +1,29 @@
+#!/usr/bin/env Rscript
+args = commandArgs(trailingOnly = TRUE)
+if (length(args) != 2) {
+    stop("usage: plot-chord [input file] [output file]")
+}
+
+file = args[1]
+data <- read.table(file, sep = "\t", header = FALSE, dec = ".", stringsAsFactor = FALSE)
+
+## load the circlize library
+if (!require(circlize)) {
+    install.packages(circlize)
+}
+library(circlize)
+ 
+## set output to a png
+out = args[2]
+png(filename = out,
+    width    = 1024,
+    height   = 1024,
+    units    = "px"
+    )
+
+## make the circular plot
+circos.par(gap.degree = 0.1)
+chordDiagram(data, directional = TRUE, transparency = 0.5)
+
+## close the png
+dev.off()

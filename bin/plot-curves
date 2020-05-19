@@ -1,0 +1,32 @@
+#!/usr/bin/env Rscript
+args = commandArgs(trailingOnly = TRUE)
+if (length(args) != 2) {
+    stop("usage: plot-curves [active] [passive] [output]")
+}
+
+## Libraries
+list.of.packages <- c("ggplot2", "hrbrthemes", "dplyr", "tidyr", "viridis")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+library(ggplot2)
+library(hrbrthemes)
+library(dplyr)
+library(tidyr)
+library(viridis)
+
+
+
+# The diamonds dataset is natively available with R.
+
+# Without transparency (left)
+p1 <- ggplot(data=diamonds, aes(x=price, group=cut, fill=cut)) +
+    geom_density(adjust=1.5) +
+    theme_ipsum()
+#p1
+
+# With transparency (right)
+p2 <- ggplot(data=diamonds, aes(x=price, group=cut, fill=cut)) +
+    geom_density(adjust=1.5, alpha=.4) +
+    theme_ipsum()
+#p2
