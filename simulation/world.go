@@ -1,6 +1,11 @@
 package simulation
 
-import h "github.com/hashicorp/hyparview"
+import (
+	"fmt"
+	"sort"
+
+	h "github.com/hashicorp/hyparview"
+)
 
 type World struct {
 	config        *WorldConfig
@@ -31,14 +36,25 @@ func (w *World) get(id string) *Client {
 	return w.nodes[id]
 }
 
+func makeID(i int) string {
+	return fmt.Sprintf("n%d", i)
+}
+
 func (w *World) nodeKeys() []string {
-	m := w.nodes
-	ks := make([]string, len(m))
+	// make the slice of keys
+	ks := make([]string, len(w.nodes))
 	i := 0
-	for k, _ := range m {
+	for k := range w.nodes {
 		ks[i] = k
 		i++
 	}
+
+	// start sorted to avoid map order indeterminacy
+	sort.Strings(ks)
+
+	// shuffle to have random order, but only math.Rand so we can replay a session
+	shuffle(ks)
+
 	return ks
 }
 
