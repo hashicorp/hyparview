@@ -5,6 +5,7 @@ type Message interface {
 	To() Node
 	AssocTo(Node) Message
 	From() Node
+	Type() string
 }
 
 // Methods that can be generated should be added to message.go.genny, and build by `make
@@ -28,6 +29,8 @@ func NewJoin(to Node, from Node) *JoinRequest {
 	}
 }
 
+func (*JoinRequest) Type() string { return "join" }
+
 type ForwardJoinRequest struct {
 	to   Node
 	from Node
@@ -44,6 +47,8 @@ func NewForwardJoin(to Node, from Node, join Node, ttl int) *ForwardJoinRequest 
 	}
 }
 
+func (*ForwardJoinRequest) Type() string { return "forward-join" }
+
 type DisconnectRequest struct {
 	to   Node
 	from Node
@@ -55,6 +60,8 @@ func NewDisconnect(to Node, from Node) *DisconnectRequest {
 		from: from,
 	}
 }
+
+func (*DisconnectRequest) Type() string { return "disconnect" }
 
 type NeighborRequest struct {
 	to       Node
@@ -80,6 +87,8 @@ func NewNeighborJoin(to Node, from Node) *NeighborRequest {
 	}
 }
 
+func (*NeighborRequest) Type() string { return "neighbor" }
+
 type NeighborRefuse struct {
 	to   Node
 	from Node
@@ -91,6 +100,8 @@ func NewNeighborRefuse(to Node, from Node) *NeighborRefuse {
 		from: from,
 	}
 }
+
+func (*NeighborRefuse) Type() string { return "neighbor-refuse" }
 
 type ShuffleRequest struct {
 	to      Node
@@ -112,6 +123,8 @@ func NewShuffle(to, from, origin Node, active, passive []Node, ttl int) *Shuffle
 	}
 }
 
+func (*ShuffleRequest) Type() string { return "shuffle" }
+
 type ShuffleReply struct {
 	to      Node
 	from    Node
@@ -125,3 +138,5 @@ func NewShuffleReply(to Node, from Node, passive []Node) *ShuffleReply {
 		Passive: passive,
 	}
 }
+
+func (*ShuffleReply) Type() string { return "shuffle-reply" }
