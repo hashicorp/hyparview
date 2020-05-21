@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	h "github.com/hashicorp/hyparview"
-	"github.com/kr/pretty"
 )
 
 func (w *World) plotPath(file string) string {
@@ -50,26 +50,44 @@ func (w *World) Connected() error {
 }
 
 func (w *World) plotPeer(peer string) {
-	n := w.nodes[peer]
-	v, _ := os.Create(w.plotPath("log-view-" + peer))
-	pretty.Fprintf(v, "%# v\n%# v\n%# v\n",
-		n.Self.Addr(),
-		nodeAddr(n.Active.Nodes),
-		nodeAddr(n.Passive.Nodes))
-
-	f, _ := os.Create(w.plotPath("log-hist-" + peer))
+	// View
+	client := w.get(peer)
+	f, _ := os.Create(w.plotPath("log-peer-" + peer))
 	defer f.Close()
+
+	fmt.Fprintf(f, "self:       %s\n", client.Self.Addr())
+	fmt.Fprintf(f, "active:     %s\n", strings.Join(nodeAddr(client.Active.Nodes), " "))
+	fmt.Fprintf(f, "passive:    %s\n", strings.Join(nodeAddr(client.Passive.Nodes), " "))
+
+	// find and print in-degree
+	in := []string{}
+	for _, p := range w.randNodes() {
+		if p.Active.Contains(client.Self) {
+			in = append(in, p.Self.Addr())
+		}
+	}
+	fmt.Fprintf(f, "in active:  %s\n", strings.Join(in, " "))
+
+	in = []string{}
+	for _, p := range w.randNodes() {
+		if p.Passive.Contains(client.Self) {
+			in = append(in, p.Self.Addr())
+		}
+	}
+	fmt.Fprintf(f, "in passive: %s\n", strings.Join(in, " "))
+
+	// History
 	wr := bufio.NewWriter(f)
 	row := "%s\t%s\t%s\t%s\n"
 	fmt.Fprintf(wr, row, "node", "type", "io", "peer")
-	for _, m := range n.history {
+	for _, m := range client.history {
 		io := "o"
 		peer := m.To().Addr()
-		if n.Self == m.To() {
+		if client.Self == m.To() {
 			io = "i"
 			peer = m.From().Addr()
 		}
-		fmt.Fprintf(wr, row, n.Self.Addr(), m.Type(), io, peer)
+		fmt.Fprintf(wr, row, client.Self.Addr(), m.Type(), io, peer)
 	}
 	wr.Flush()
 }
