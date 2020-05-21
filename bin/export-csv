@@ -1,0 +1,14 @@
+#!/bin/sh
+if [ $# -lt 1 ]; then
+    cat <<EOF 1>&2
+usage: $0 [active|passive] [simulation]
+       simulation defaults to 0001
+       the CSV can be opened with https://gephi.org
+EOF
+    exit 1
+fi
+
+sim="${2:-0001}"
+
+echo 'source;target'
+< "data/$sim-graph-$1" tr '\t' ';'
