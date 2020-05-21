@@ -1,9 +1,5 @@
 package simulation
 
-import (
-	"fmt"
-)
-
 func simulation(c WorldConfig) *World {
 	w := &World{
 		config: &c,
@@ -13,7 +9,7 @@ func simulation(c WorldConfig) *World {
 
 	// log.Printf("debug: make all the nodes")
 	for i := 0; i < c.peers; i++ {
-		id := fmt.Sprintf("n%d", i)
+		id := makeID(i)
 		w.nodes[id] = makeClient(w, id)
 	}
 
@@ -52,8 +48,7 @@ func (w *World) maybeShuffle() {
 		return
 	}
 
-	ns := w.randNodes()
-	for _, n := range ns {
+	for _, n := range w.randNodes() {
 		n.SendShuffle(n.Peer())
 	}
 }

@@ -14,11 +14,14 @@ func (w *World) plotPath(file string) string {
 }
 
 func (w *World) Connected() error {
+	// populate the lost list
 	lost := make(map[string]*Client, len(w.nodes))
-	for k, v := range w.nodes {
-		lost[k] = v
+	nodes := w.nodeKeys()
+	for _, n := range nodes {
+		lost[n] = w.get(n)
 	}
 
+	// recursively remove the active view
 	// declare first to allow recursion
 	var lp func(h.Node)
 	lp = func(n h.Node) {
@@ -27,18 +30,12 @@ func (w *World) Connected() error {
 		}
 
 		delete(lost, n.Addr())
-		for _, m := range w.get(n.Addr()).Active.Shuffled() {
+		for _, m := range w.get(n.Addr()).Active.Nodes {
 			lp(m)
 		}
 	}
 
-	// I hate that this is lp(first(nodes)) but nodes is a map
-	var start h.Node
-	for _, v := range w.nodes {
-		start = v.Self
-		break
-	}
-	lp(start)
+	lp(w.get(nodes[0]).Self)
 
 	if len(lost) == 0 {
 		return nil
@@ -79,8 +76,8 @@ func (w *World) plotPeer(peer string) {
 
 func (w *World) isSymmetric() error {
 	count := 0
-	for _, n := range w.nodes {
-		for _, p := range n.Active.Shuffled() {
+	for _, n := range w.randNodes() {
+		for _, p := range n.Active.Nodes {
 			if !w.get(p.Addr()).Active.Contains(n.Self) {
 				count++
 				break
@@ -102,7 +99,7 @@ func (w *World) plotSeed(seed int64) {
 
 func (w *World) plotBootstrapCount() {
 	h := map[int]int{}
-	for _, n := range w.nodes {
+	for _, n := range w.randNodes() {
 		h[n.bootstrapCount] += 1
 	}
 
@@ -127,7 +124,7 @@ func passivePart(c *Client) *h.ViewPart {
 func (w *World) plotOutDegree() {
 	plot := func(p getPart, path string) {
 		act := map[string]int{}
-		for _, n := range w.nodes {
+		for _, n := range w.randNodes() {
 			act[n.Self.Addr()] = p(n).Size()
 		}
 
@@ -169,7 +166,7 @@ func (w *World) plotGraph(plotName string, part getPart) {
 
 	row := "%s\t%s\n"
 
-	for _, v := range w.nodes {
+	for _, v := range w.randNodes() {
 		from := v.Self.Addr()
 		for _, n := range part(v).Nodes {
 			f.WriteString(fmt.Sprintf(row, from, n.Addr()))
@@ -180,7 +177,7 @@ func (w *World) plotGraph(plotName string, part getPart) {
 func (w *World) plotInDegree() {
 	plot := func(part getPart, path string) {
 		act := map[string]int{}
-		for _, v := range w.nodes {
+		for _, v := range w.randNodes() {
 			for _, n := range part(v).Nodes {
 				// Count in-degree
 				act[n.Addr()] += 1
@@ -228,7 +225,7 @@ func (w *World) traceRound(app int) {
 	}
 
 	miss, seen, waste := 0, 0, 0
-	for _, c := range w.nodes {
+	for _, c := range w.randNodes() {
 		if c.app < app {
 			miss += 1
 		}
