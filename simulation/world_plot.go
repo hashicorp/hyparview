@@ -10,7 +10,7 @@ import (
 )
 
 func (w *World) dir() string {
-	fmt.Sprintf("../data/%05d", w.config.iteration)
+	return fmt.Sprintf("../data/%05d", w.config.iteration)
 }
 
 func (w *World) mkdir() {
@@ -128,16 +128,23 @@ func (w *World) plotSeed(seed int64) {
 }
 
 func (w *World) plotBootstrapCount() {
+	max := 0
 	h := map[int]int{}
 	for _, n := range w.randNodes() {
 		h[n.bootstrapCount] += 1
+		if n.bootstrapCount > max {
+			max = n.bootstrapCount
+		}
 	}
 
 	f, _ := os.Create(w.plotPath("bootstrap"))
 	defer f.Close()
 
-	for boots, nodes := range h {
-		f.WriteString(fmt.Sprintf("%d %d\n", boots, nodes))
+	// go in order to avoid map range
+	for i := 0; i <= max; i++ {
+		if c, ok := h[i]; ok {
+			f.WriteString(fmt.Sprintf("%d %d\n", i, c))
+		}
 	}
 }
 
