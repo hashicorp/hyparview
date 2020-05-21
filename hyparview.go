@@ -172,10 +172,21 @@ func (v *Hyparview) RecvNeighbor(r *NeighborRequest) *NeighborRefuse {
 }
 
 // SendShuffle creates and sends a shuffle request to maintain the passive view
-func (v *Hyparview) SendShuffle(node Node) *ShuffleRequest {
+func (v *Hyparview) SendShuffle() {
+	node := v.Peer()
+	if node == nil {
+		// the active view is empty, just ignore the shuffle
+		return
+	}
+	m := v.composeShuffle(node)
+	v.LastShuffle = m.Passive
+	v.Send(m)
+}
+
+// composeShuffle is testable, it updates the view but returns the message
+func (v *Hyparview) composeShuffle(node Node) *ShuffleRequest {
 	as := v.Active.Shuffled()[:min(v.ShuffleActive, v.Active.Size())]
 	ps := v.Passive.Shuffled()[:min(v.ShufflePassive, v.Passive.Size())]
-	v.LastShuffle = ps
 	return NewShuffle(node, v.Self, v.Self, as, ps, v.RWL.Shuffle)
 }
 
