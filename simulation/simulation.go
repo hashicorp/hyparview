@@ -30,7 +30,7 @@ func simulation(c WorldConfig) *World {
 	}
 
 	ns = w.randNodes()
-	for i := 0; i < c.rounds; i++ {
+	for i := 0; i < c.gossips; i++ {
 		// gossip drains all the hyparview messages and sends all the gossip
 		// messages before returning. Also maintains the active view
 		node := ns[i] // client connects to a random node
@@ -49,6 +49,6 @@ func (w *World) maybeShuffle() {
 	}
 
 	for _, n := range w.randNodes() {
-		n.SendShuffle(n.Peer())
+		n.SendShuffle()
 	}
 }
