@@ -23,7 +23,7 @@ type World struct {
 }
 
 type WorldConfig struct {
-	rounds      int
+	gossips     int
 	peers       int
 	mortality   int
 	payloads    int
