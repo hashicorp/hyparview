@@ -1,5 +1,7 @@
 package simulation
 
+import "math/rand"
+
 func simulation(c WorldConfig) *World {
 	w := &World{
 		config: &c,
@@ -29,11 +31,10 @@ func simulation(c WorldConfig) *World {
 		rounds = c.peers
 	}
 
-	ns = w.randNodes()
 	for i := 0; i < c.gossips; i++ {
 		// gossip drains all the hyparview messages and sends all the gossip
 		// messages before returning. Also maintains the active view
-		node := ns[i] // client connects to a random node
+		node := w.get(makeID(rand.Intn(len(w.nodes))))
 		p := i + 1
 		node.gossip(p)
 		w.traceRound(p)
@@ -44,10 +45,16 @@ func simulation(c WorldConfig) *World {
 }
 
 func (w *World) maybeShuffle() {
-	if w.totalMessages%w.config.shuffleFreq != 0 {
+	if w.shuffleTick < w.config.shuffleFreq {
+		w.shuffleTick += 1
 		return
 	}
 
+	// if (w.totalMessages+w.totalPayloads)%w.config.shuffleFreq != 0 {
+	// 	return
+	// }
+
+	w.shuffleTick = 0
 	for _, n := range w.randNodes() {
 		n.SendShuffle()
 	}
