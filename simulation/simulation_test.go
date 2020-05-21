@@ -20,7 +20,8 @@ func TestSimulation(t *testing.T) {
 		count = conv
 	}
 
-	conv, err := strconv.Atoi(os.Getenv("SIMULATION_PEERS"))
+	conv, err = strconv.Atoi(os.Getenv("SIMULATION_PEERS"))
+
 	if err == nil {
 		peers = conv
 	}
@@ -35,7 +36,7 @@ func TestSimulation(t *testing.T) {
 func testSimulation(t *testing.T, i int, peers int) {
 	seed := h.Rint64Crypto(math.MaxInt64 - 1)
 	rand.Seed(seed)
-	fmt.Printf("Seed %d\n", seed)
+	fmt.Printf("world: %d seed: %d peers: %d\n", i, seed, peers)
 
 	w := simulation(WorldConfig{
 		peers:       peers,
@@ -48,13 +49,15 @@ func testSimulation(t *testing.T, i int, peers int) {
 
 	err := w.Connected()
 	if err != nil {
-		t.Errorf("run %d: graph disconnected: %s", i, err.Error())
+		t.Errorf("world %d: graph disconnected: %s", i, err.Error())
 	}
 
-	err = w.isSymmetric()
-	if err != nil {
-		t.Logf("run %d: active view asymmetric: %s", i, err.Error())
-	}
+	// This isn't an error. It's useful for working on symmetry, but because of the
+	// failure rate, there's always a tail of asymmetries
+	// err = w.isSymmetric()
+	// if err != nil {
+	// 	t.Logf("run %d: active view asymmetric: %s", i, err.Error())
+	// }
 
 	// w.debugQueue()
 	w.plotSeed(seed)
