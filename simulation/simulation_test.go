@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"testing"
 
-	// h "github.com/hashicorp/hyparview"
 	h "github.com/hashicorp/hyparview"
 )
 
@@ -21,20 +20,24 @@ func TestSimulation(t *testing.T) {
 	}
 
 	conv, err = strconv.Atoi(os.Getenv("SIMULATION_PEERS"))
-
 	if err == nil {
 		peers = conv
 	}
 
+	seed := h.Rint64Crypto(math.MaxInt64 - 1)
+	conv64, err := strconv.ParseInt(os.Getenv("SIMULATION_SEED"), 10, 64)
+	if err == nil {
+		seed = conv64
+	}
+
 	for i := 1; i <= count; i++ {
-		testSimulation(t, i, peers)
+		testSimulation(t, i, peers, seed)
 	}
 }
 
 // testSimulation is the entry point to test a single world
 // World configuration and assertion goes here
-func testSimulation(t *testing.T, i int, peers int) {
-	seed := h.Rint64Crypto(math.MaxInt64 - 1)
+func testSimulation(t *testing.T, i int, peers int, seed int64) {
 	rand.Seed(seed)
 	fmt.Printf("world: %d seed: %d peers: %d\n", i, seed, peers)
 
@@ -42,7 +45,7 @@ func testSimulation(t *testing.T, i int, peers int) {
 		peers:       peers,
 		payloads:    30,
 		iteration:   i,
-		shuffleFreq: 30,
+		shuffleFreq: 100,
 		failureRate: 10,
 		gossips:     200,
 	})
@@ -60,6 +63,8 @@ func testSimulation(t *testing.T, i int, peers int) {
 	// }
 
 	// w.debugQueue()
+	// w.plotPeer("n2375")
+	w.mkdir()
 	w.plotSeed(seed)
 	w.plotBootstrapCount()
 	w.plotInDegree()
