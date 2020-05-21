@@ -19,6 +19,7 @@ func (w *World) Connected() error {
 		lost[k] = v
 	}
 
+	// declare first to allow recursion
 	var lp func(h.Node)
 	lp = func(n h.Node) {
 		if _, ok := lost[n.Addr()]; !ok {
@@ -31,7 +32,7 @@ func (w *World) Connected() error {
 		}
 	}
 
-	// I hate that this is lp(first(nodes))
+	// I hate that this is lp(first(nodes)) but nodes is a map
 	var start h.Node
 	for _, v := range w.nodes {
 		start = v.Self
@@ -44,15 +45,36 @@ func (w *World) Connected() error {
 	}
 
 	// Log the history of lost nodes
-	f, _ := os.Create(w.plotPath("lost.log"))
-	defer f.Close()
-	wr := bufio.NewWriter(f)
-	for _, n := range lost {
-		pretty.Fprintf(wr, "%# v\n%# v\n", n.Self, n.history)
-		break
+	for n := range lost {
+		w.plotPeer(n)
 	}
 
 	return fmt.Errorf("%d connected, %d lost\n", len(w.nodes)-len(lost), len(lost))
+}
+
+func (w *World) plotPeer(peer string) {
+	n := w.nodes[peer]
+	v, _ := os.Create(w.plotPath("log-view-" + peer))
+	pretty.Fprintf(v, "%# v\n%# v\n%# v\n",
+		n.Self.Addr(),
+		nodeAddr(n.Active.Nodes),
+		nodeAddr(n.Passive.Nodes))
+
+	f, _ := os.Create(w.plotPath("log-hist-" + peer))
+	defer f.Close()
+	wr := bufio.NewWriter(f)
+	row := "%s\t%s\t%s\t%s\n"
+	fmt.Fprintf(wr, row, "node", "type", "io", "peer")
+	for _, m := range n.history {
+		io := "o"
+		peer := m.To().Addr()
+		if n.Self == m.To() {
+			io = "i"
+			peer = m.From().Addr()
+		}
+		fmt.Fprintf(wr, row, n.Self.Addr(), m.Type(), io, peer)
+	}
+	wr.Flush()
 }
 
 func (w *World) isSymmetric() error {

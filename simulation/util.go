@@ -19,3 +19,10 @@ func keys(m map[string]interface{}) []string {
 	}
 	return ks
 }
+
+func nodeAddr(nodes []h.Node) (addr []string) {
+	for _, n := range nodes {
+		addr = append(addr, n.Addr())
+	}
+	return addr
+}
