@@ -9,8 +9,16 @@ import (
 	h "github.com/hashicorp/hyparview"
 )
 
+func (w *World) dir() string {
+	fmt.Sprintf("../data/%05d", w.config.iteration)
+}
+
+func (w *World) mkdir() {
+	os.MkdirAll(w.dir(), 0777)
+}
+
 func (w *World) plotPath(file string) string {
-	return fmt.Sprintf("../data/%04d-%s", w.config.iteration, file)
+	return w.dir() + "/" + file
 }
 
 func (w *World) Connected() error {
@@ -52,6 +60,10 @@ func (w *World) Connected() error {
 func (w *World) plotPeer(peer string) {
 	// View
 	client := w.get(peer)
+	if client == nil {
+		return
+	}
+
 	f, _ := os.Create(w.plotPath("log-peer-" + peer))
 	defer f.Close()
 
