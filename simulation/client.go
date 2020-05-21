@@ -34,6 +34,7 @@ func (c *Client) recv(m h.Message) *h.NeighborRefuse {
 		c.recvGossip(m1)
 		return nil
 	default:
+		c.w.totalMessages += 1
 		c.history = append(c.history, m)
 		return c.Recv(m)
 	}
@@ -53,8 +54,6 @@ func (c *Client) shouldFail() bool {
 
 // Implement the sender interface
 func (c *Client) Send(m h.Message) (*h.NeighborRefuse, error) {
-	c.w.totalMessages += 1
-
 	if c.shouldFail() {
 		return nil, fmt.Errorf("request error")
 	}
