@@ -56,4 +56,5 @@ func testSimulation(t *testing.T, i int, peers int) {
 	w.plotInDegree()
 	w.plotOutDegree()
 	w.plotGossip()
+	w.plotGraphs()
 }

@@ -92,11 +92,21 @@ func (w *World) plotBootstrapCount() {
 	}
 }
 
+type getPart func(c *Client) *h.ViewPart
+
+func activePart(c *Client) *h.ViewPart {
+	return c.Active
+}
+
+func passivePart(c *Client) *h.ViewPart {
+	return c.Passive
+}
+
 func (w *World) plotOutDegree() {
-	plot := func(ns func(*h.Hyparview) int, path string) {
+	plot := func(p getPart, path string) {
 		act := map[string]int{}
 		for _, n := range w.nodes {
-			act[n.Self.Addr()] = ns(&n.Hyparview)
+			act[n.Self.Addr()] = p(n).Size()
 		}
 
 		max := 0
@@ -121,17 +131,35 @@ func (w *World) plotOutDegree() {
 		}
 	}
 
-	af := w.plotPath("out-active")
-	pf := w.plotPath("out-passive")
-	plot(func(v *h.Hyparview) int { return v.Active.Size() }, af)
-	plot(func(v *h.Hyparview) int { return v.Passive.Size() }, pf)
+	plot(activePart, w.plotPath("out-active"))
+	plot(passivePart, w.plotPath("out-passive"))
+}
+
+func (w *World) plotGraphs() {
+	w.plotGraph("graph-active", activePart)
+	w.plotGraph("graph-passive", passivePart)
+}
+
+func (w *World) plotGraph(plotName string, part getPart) {
+	path := w.plotPath(plotName)
+	f, _ := os.Create(path)
+	defer f.Close()
+
+	row := "%s\t%s\n"
+
+	for _, v := range w.nodes {
+		from := v.Self.Addr()
+		for _, n := range part(v).Nodes {
+			f.WriteString(fmt.Sprintf(row, from, n.Addr()))
+		}
+	}
 }
 
 func (w *World) plotInDegree() {
-	plot := func(ns func(*h.Hyparview) []h.Node, path string) {
+	plot := func(part getPart, path string) {
 		act := map[string]int{}
 		for _, v := range w.nodes {
-			for _, n := range ns(&v.Hyparview) {
+			for _, n := range part(v).Nodes {
 				// Count in-degree
 				act[n.Addr()] += 1
 			}
@@ -158,10 +186,9 @@ func (w *World) plotInDegree() {
 			f.WriteString(fmt.Sprintf("%d %d\n", inDegree, peers))
 		}
 	}
-	af := w.plotPath("in-active")
-	pf := w.plotPath("in-passive")
-	plot(func(v *h.Hyparview) []h.Node { return v.Active.Nodes }, af)
-	plot(func(v *h.Hyparview) []h.Node { return v.Passive.Nodes }, pf)
+
+	plot(activePart, w.plotPath("in-active"))
+	plot(passivePart, w.plotPath("in-passive"))
 }
 
 type gossipRound struct {
