@@ -20,6 +20,8 @@ type World struct {
 
 	spinCount  int
 	spinCountM map[string]int
+
+	shuffleTick int
 }
 
 type WorldConfig struct {
