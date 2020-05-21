@@ -10,19 +10,14 @@ type gossip struct {
 }
 
 // Implement the message interface for gossip
-func (r *gossip) To() h.Node {
-	return r.to
-}
-
+func (r *gossip) To() h.Node { return r.to }
 func (r *gossip) AssocTo(n h.Node) h.Message {
 	o := *r
 	o.to = n
 	return &o
 }
-
-func (r *gossip) From() h.Node {
-	return r.from
-}
+func (r *gossip) From() h.Node { return r.from }
+func (r *gossip) Type() string { return "gossip" }
 
 func (c *Client) gossip(i int) {
 	c.recvGossip(&gossip{to: c.Self, app: i, hops: 0})
