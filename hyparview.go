@@ -56,7 +56,7 @@ func (v *Hyparview) RecvJoin(r *JoinRequest) {
 	v.AddActive(r.From())
 
 	// Forward to all active peers
-	for _, n := range v.Active.Nodes {
+	for _, n := range v.Active.nodes {
 		if EqualNode(n, r.From()) {
 			continue
 		}

@@ -88,8 +88,8 @@ func TestShuffleRecv(t *testing.T) {
 
 func TestViewMaxAdd(t *testing.T) {
 	v := CreateView(newSliceSender(), NewNode("self"), 0)
-	require.Equal(t, 30, v.Passive.Max)
-	v.Passive.Max = 3
+	require.Equal(t, 30, v.Passive.max)
+	v.Passive.max = 3
 	v.AddPassive(NewNode("a"))
 	v.AddPassive(NewNode("b"))
 	v.AddPassive(NewNode("c"))
@@ -148,8 +148,8 @@ func TestNeighborSymmetry(t *testing.T) {
 	for _, n := range []string{"a", "b", "c", "d"} {
 		s[n] = newSliceSender()
 		v[n] = CreateView(s[n], NewNode(n), 0)
-		v[n].Active.Max = 2
-		v[n].Passive.Max = 2
+		v[n].Active.max = 2
+		v[n].Passive.max = 2
 	}
 
 	// Promote passive
@@ -160,8 +160,8 @@ func TestNeighborSymmetry(t *testing.T) {
 	}
 
 	require.Equal(t, 0, v["a"].Passive.Size())
-	require.Equal(t, v["a"].Self, v["b"].Active.Nodes[0])
-	require.Equal(t, v["b"].Self, v["a"].Active.Nodes[0])
+	require.Equal(t, v["a"].Self, v["b"].Active.nodes[0])
+	require.Equal(t, v["b"].Self, v["a"].Active.nodes[0])
 
 	for _, n := range []string{"a", "b"} {
 		v[n].Active.Add(v["c"].Self)
