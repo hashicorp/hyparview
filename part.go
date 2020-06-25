@@ -1,40 +1,40 @@
 package hyparview
 
 type ViewPart struct {
-	Nodes []Node
-	Max   int
+	nodes []Node
+	max   int
 }
 
 func CreateViewPart(size int) *ViewPart {
 	return &ViewPart{
-		Nodes: []Node{},
-		Max:   size,
+		nodes: make([]Node, 0, size),
+		max:   size,
 	}
 }
 
 func (v *ViewPart) IsEmpty() bool {
-	return len(v.Nodes) <= 1
+	return len(v.nodes) <= 1
 }
 
 func (v *ViewPart) IsEmptyBut(peer Node) bool {
 	return v.IsEmpty() ||
-		(len(v.Nodes) == 1 &&
-			EqualNode(peer, v.Nodes[0]))
+		(len(v.nodes) == 1 &&
+			EqualNode(peer, v.nodes[0]))
 }
 
 func (v *ViewPart) IsFull() bool {
-	return len(v.Nodes) >= v.Max
+	return len(v.nodes) >= v.max
 }
 
 func (v *ViewPart) Size() int {
-	return len(v.Nodes)
+	return len(v.nodes)
 }
 
 func (v *ViewPart) Copy() *ViewPart {
 	w := *v
-	nodes := make([]Node, len(v.Nodes))
-	copy(nodes, v.Nodes)
-	w.Nodes = nodes
+	nodes := make([]Node, v.max)
+	copy(nodes, v.nodes)
+	w.nodes = nodes
 	return &w
 }
 
@@ -46,8 +46,8 @@ func (v *ViewPart) Equal(w *ViewPart) bool {
 		return false
 	}
 setwise:
-	for _, n := range v.Nodes {
-		for _, m := range w.Nodes {
+	for _, n := range v.nodes {
+		for _, m := range w.nodes {
 			if EqualNode(n, m) {
 				continue setwise
 			}
@@ -59,13 +59,12 @@ setwise:
 
 func (v *ViewPart) Add(n Node) {
 	if !v.Contains(n) {
-		v.Nodes = append(v.Nodes, n)
+		v.nodes = append(v.nodes, n)
 	}
 }
 
 func (v *ViewPart) DelIndex(i int) {
-	ns := v.Nodes
-	v.Nodes = append(ns[:i], ns[i+1:]...)
+	v.nodes = append(v.nodes[:i], v.nodes[i+1:]...)
 }
 
 func (v *ViewPart) DelNode(n Node) bool {
@@ -78,14 +77,14 @@ func (v *ViewPart) DelNode(n Node) bool {
 }
 
 func (v *ViewPart) GetIndex(i int) Node {
-	return v.Nodes[i]
+	return v.nodes[i]
 }
 
 func (v *ViewPart) Shuffled() []Node {
-	l := len(v.Nodes)
+	l := len(v.nodes)
 	ns := make([]Node, l)
 	// Start with a copy, fischer-yates needs to operate destructively
-	copy(ns, v.Nodes)
+	copy(ns, v.nodes)
 	for i := l - 1; i > 0; i-- {
 		j := Rint(i)
 		ns[i], ns[j] = ns[j], ns[i]
@@ -94,15 +93,15 @@ func (v *ViewPart) Shuffled() []Node {
 }
 
 func (v *ViewPart) RandIndex() int {
-	return Rint(len(v.Nodes) - 1)
+	return Rint(len(v.nodes) - 1)
 }
 
 func (v *ViewPart) RandNode() Node {
-	return v.Nodes[v.RandIndex()]
+	return v.nodes[v.RandIndex()]
 }
 
 func (v *ViewPart) ContainsIndex(n Node) int {
-	for i, m := range v.Nodes {
+	for i, m := range v.nodes {
 		if EqualNode(n, m) {
 			return i
 		}
