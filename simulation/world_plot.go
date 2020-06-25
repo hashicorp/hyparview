@@ -38,7 +38,7 @@ func (w *World) Connected() error {
 		}
 
 		delete(lost, n.Addr())
-		for _, m := range w.get(n.Addr()).Active.Nodes {
+		for _, m := range w.get(n.Addr()).Active.Shuffled() {
 			lp(m)
 		}
 	}
@@ -68,8 +68,8 @@ func (w *World) plotPeer(peer string) {
 	defer f.Close()
 
 	fmt.Fprintf(f, "self:       %s\n", client.Self.Addr())
-	fmt.Fprintf(f, "active:     %s\n", strings.Join(nodeAddr(client.Active.Nodes), " "))
-	fmt.Fprintf(f, "passive:    %s\n", strings.Join(nodeAddr(client.Passive.Nodes), " "))
+	fmt.Fprintf(f, "active:     %s\n", strings.Join(nodeAddr(client.Active.Shuffled()), " "))
+	fmt.Fprintf(f, "passive:    %s\n", strings.Join(nodeAddr(client.Passive.Shuffled()), " "))
 
 	// find and print in-degree
 	in := []string{}
@@ -107,7 +107,7 @@ func (w *World) plotPeer(peer string) {
 func (w *World) isSymmetric() error {
 	count := 0
 	for _, n := range w.randNodes() {
-		for _, p := range n.Active.Nodes {
+		for _, p := range n.Active.Shuffled() {
 			if !w.get(p.Addr()).Active.Contains(n.Self) {
 				count++
 				break
@@ -205,7 +205,7 @@ func (w *World) plotGraph(plotName string, part getPart) {
 
 	for _, v := range w.randNodes() {
 		from := v.Self.Addr()
-		for _, n := range part(v).Nodes {
+		for _, n := range part(v).Shuffled() {
 			f.WriteString(fmt.Sprintf(row, from, n.Addr()))
 		}
 	}
@@ -215,7 +215,7 @@ func (w *World) plotInDegree() {
 	plot := func(part getPart, path string) {
 		act := map[string]int{}
 		for _, v := range w.randNodes() {
-			for _, n := range part(v).Nodes {
+			for _, n := range part(v).Shuffled() {
 				// Count in-degree
 				act[n.Addr()] += 1
 			}
