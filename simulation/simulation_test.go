@@ -24,13 +24,13 @@ func TestSimulation(t *testing.T) {
 		peers = conv
 	}
 
-	seed := h.Rint64Crypto(math.MaxInt64 - 1)
-	conv64, err := strconv.ParseInt(os.Getenv("SIMULATION_SEED"), 10, 64)
-	if err == nil {
-		seed = conv64
-	}
-
 	for i := 1; i <= count; i++ {
+		seed := h.Rint64Crypto(math.MaxInt64 - 1)
+		conv64, err := strconv.ParseInt(os.Getenv("SIMULATION_SEED"), 10, 64)
+		if err == nil {
+			seed = conv64
+		}
+
 		testSimulation(t, i, peers, seed)
 	}
 }
@@ -50,6 +50,7 @@ func testSimulation(t *testing.T, i int, peers int, seed int64) {
 		gossips:     200,
 	})
 
+	w.mkdir()
 	err := w.Connected()
 	if err != nil {
 		t.Errorf("world %d: graph disconnected: %s", i, err.Error())
@@ -63,8 +64,6 @@ func testSimulation(t *testing.T, i int, peers int, seed int64) {
 	// }
 
 	// w.debugQueue()
-	// w.plotPeer("n2375")
-	w.mkdir()
 	w.plotSeed(seed)
 	w.plotBootstrapCount()
 	w.plotInDegree()
