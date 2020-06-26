@@ -50,9 +50,9 @@ See =data= for the data input. Plotting output is in =plot=
 
 * Improvements to the Code
 
-- Incorporate =gossip= into the main implementation. This requires an
-  extended interface that allows us to model gossip messages and
-  client applictions to replace their payloads with meaningful content
+- Isolated nodes in simulation runs have asymmetric active views.
+  Refactor the simulator to support periodic messages like active view
+  keepalive and shuffle from the perspective of each node.
 
 - Incorporate =failActive= directly into the code. Because it relies
   on synchronous low priority =Neighbor= requests, it requires a sort
