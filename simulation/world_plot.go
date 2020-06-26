@@ -90,8 +90,9 @@ func (w *World) plotPeer(peer string) {
 
 	// History
 	wr := bufio.NewWriter(f)
-	row := "%s\t%s\t%s\t%s\n"
-	fmt.Fprintf(wr, row, "node", "type", "io", "peer")
+	head := "%s\t%s\t%s\t%s\t%s\n"
+	row := "%s\t%s\t%s\t%s\t%d\n"
+	fmt.Fprintf(wr, head, "node", "type", "io", "peer", "datum")
 	for _, m := range client.history {
 		io := "o"
 		peer := m.To().Addr()
@@ -99,9 +100,29 @@ func (w *World) plotPeer(peer string) {
 			io = "i"
 			peer = m.From().Addr()
 		}
-		fmt.Fprintf(wr, row, client.Self.Addr(), m.Type(), io, peer)
+
+		fmt.Fprintf(wr, row, client.Self.Addr(), m.Type(), io, peer, datum(m))
 	}
 	wr.Flush()
+}
+
+func datum(m h.Message) int {
+	switch v := m.(type) {
+	case *gossip:
+		return v.app
+	case *h.ForwardJoinRequest:
+		return v.TTL
+	case *h.ShuffleRequest:
+		return v.TTL
+	case *h.NeighborRequest:
+		pri := 0
+		if v.Priority {
+			pri = 1
+		}
+		return pri
+	default:
+		return 0
+	}
 }
 
 func (w *World) isSymmetric() error {
