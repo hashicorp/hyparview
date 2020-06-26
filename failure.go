@@ -1,98 +1,91 @@
 package hyparview
 
+type SendCallback func(Message, error)
+
 type Send interface {
 	// Send sends one message at a time to a peer. TODO simplify batching?
 	// send should use a timeout to detect blocking as failure
-	Send(Message) (*NeighborRefuse, error)
+	Send(Message, SendCallback)
 	// Failed is called after hyparview has handled the failure, to handle e.g.
 	// connection cleanup
 	Failed(Node)
-	// Bootstrap sends a join to some server, discovered by some external consideration
-	Bootstrap() Node
+	// Bootstrap sends a join to some server, discovered externally
+	Bootstrap()
 }
 
 // Send wraps the S.Send sender in appropriate error handling
+// Send -> network -> callback -> recover, resend
 func (v *Hyparview) Send(ms ...Message) {
-	subs := map[string]Node{}
+	for _, m := range ms {
+		// RecvDisconnect -> PromotePassiveBut may send a nil message
+		// shouldn't happen otherwise, but we don't want to panic
+		if m == nil {
+			continue
+		}
 
-	for i := 0; i < len(ms); {
-		m := ms[i]
 		n := m.To()
 
-		// Send messages to the replacement node, if we have one
-		if sub, ok := subs[n.Addr()]; ok {
-			m = m.AssocTo(sub)
-		}
-
-		_, err := v.S.Send(m)
-		if err != nil {
-			v.Active.DelNode(n)
-			v.S.Failed(n)
-			sub := v.PromotePassive()
-
-			if sub == nil {
-				// FIXME re-Join
-				// log.Printf("WARN empty passive view, fail %d", len(ms)-i)
-				// return
-				sub = v.S.Bootstrap()
+		v.S.Send(m, func(_ Message, err error) {
+			if err == nil {
+				return
 			}
 
-			subs[n.Addr()] = sub
-		} else {
-			// On failure, retry the failed message with the replacement server
-			i++
-		}
+			v.Active.DelNode(n)
+			v.S.Failed(n)
+			v.PromotePassive(m)
+		})
 	}
 }
 
-func (v *Hyparview) Bootstrap() Node {
-	return v.S.Bootstrap()
+func (v *Hyparview) Bootstrap() {
+	v.S.Bootstrap()
 }
 
-func (v *Hyparview) PromotePassive() Node {
-	return v.PromotePassiveBut(nil)
+func (v *Hyparview) PromotePassive(m Message) {
+	v.PromotePassiveBut(nil, m)
 }
 
-func (v *Hyparview) PromotePassiveBut(peer Node) Node {
+// PromotePassiveBut chooses any passive node except peer, and sends it a neighbor message.
+// If the request is accepted, the peer is promoted and message is retried with the new
+// active peer.
+func (v *Hyparview) PromotePassiveBut(peer Node, message Message) {
+	n := v.Passive.RandNodeBut(peer)
+	if n == nil {
+		// We'll drop the message here, but we've got bigger problems
+		v.Bootstrap()
+		return
+	}
+
 	pri := v.Active.IsEmpty()
+	m := NewNeighbor(n, v.Self, pri)
 
-	for _, n := range v.Passive.Shuffled() {
-		if EqualNode(n, peer) {
-			continue
-		}
-
-		m := NewNeighbor(n, v.Self, pri)
-
-		resp, err := v.S.Send(m)
+	v.S.Send(m, func(resp Message, err error) {
 		if err != nil {
 			v.Passive.DelNode(n)
-			continue
+			return
 		}
 
-		if pri == HighPriority {
-			v.AddActive(n)
-			v.DelPassive(n)
-			return n
-		}
-
-		// Low priority, a refuse means we move on but keep the peer
-		if resp != nil {
-			continue
+		// Low priority, a refuse means we move on and leave the node in our passive view
+		// A correct peer should never return a refusal if we sent a high priority
+		// request, so checking pri here is probably unecessary
+		if resp != nil && pri == LowPriority {
+			v.PromotePassiveBut(peer, message)
+			return
 		}
 
 		v.AddActive(n)
 		v.DelPassive(n)
-		return n
-	}
-	return nil
+		v.Send(message)
+		return
+	})
 }
 
 // greedyShuffle tries to populate our active view on RecvShuffle
-func (v *Hyparview) greedyShuffle() {
-	if !v.Active.IsFull() {
-		v.PromotePassive()
-	}
-}
+// func (v *Hyparview) greedyShuffle() {
+// 	if !v.Active.IsFull() {
+// 		v.PromotePassive()
+// 	}
+// }
 
 // repairAsymmetry handles a message from an unexpected sender
 func (v *Hyparview) repairAsymmetry(m Message) {
