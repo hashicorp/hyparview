@@ -1,13 +1,11 @@
 package simulation
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 func simulation(c WorldConfig) *World {
-	w := &World{
-		config: &c,
-		nodes:  make(map[string]*Client, c.peers),
-		morgue: make(map[string]*Client),
-	}
+	w := newWorld(c)
 
 	// log.Printf("debug: make all the nodes")
 	for i := 0; i < c.peers; i++ {
@@ -21,6 +19,7 @@ func simulation(c WorldConfig) *World {
 	for _, me := range ns[1:] {
 		// boot := w.nodes[fmt.Sprintf("n%d", h.Rint(i))]
 		me.SendJoin(w.bootstrap)
+		w.deliverAll()
 	}
 
 	// log.Printf("debug: send some gossip messages")
@@ -33,6 +32,7 @@ func simulation(c WorldConfig) *World {
 	for i := 0; i < c.gossips; i++ {
 		for _, c := range w.randNodes() {
 			c.next()
+			w.deliverAll()
 		}
 
 		// gossip drains all the hyparview messages and sends all the gossip
@@ -40,6 +40,7 @@ func simulation(c WorldConfig) *World {
 		node := w.get(makeID(rand.Intn(len(w.nodes))))
 		p := i + 1
 		node.gossip(p)
+		w.deliverAll()
 		w.traceRound(p)
 	}
 
