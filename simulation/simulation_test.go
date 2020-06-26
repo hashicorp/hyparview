@@ -24,13 +24,17 @@ func TestSimulation(t *testing.T) {
 		peers = conv
 	}
 
-	seed := h.Rint64Crypto(math.MaxInt64 - 1)
-	conv64, err := strconv.ParseInt(os.Getenv("SIMULATION_SEED"), 10, 64)
+	var seed int64
+	envSeed, err := strconv.ParseInt(os.Getenv("SIMULATION_SEED"), 10, 64)
 	if err == nil {
-		seed = conv64
+		seed = envSeed
 	}
 
 	for i := 1; i <= count; i++ {
+		if envSeed == 0 {
+			seed = h.Rint64Crypto(math.MaxInt64 - 1)
+		}
+
 		testSimulation(t, i, peers, seed)
 	}
 }
