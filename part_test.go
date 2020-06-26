@@ -15,9 +15,11 @@ func TestContains(t *testing.T) {
 	n = NewNode("b")
 	v.Add(n)
 	require.Equal(t, 1, v.ContainsIndex(n))
+	require.True(t, v.IsFull())
 
 	v.DelIndex(1)
 	require.False(t, v.Contains(n))
+	require.False(t, v.IsFull())
 
 	v.Add(NewNode("c"))
 	n = NewNode("d")
@@ -29,4 +31,10 @@ func TestContains(t *testing.T) {
 	require.Equal(t, "a", v.Nodes[0].Addr())
 	require.Equal(t, "c", v.Nodes[1].Addr())
 	require.Equal(t, "e", v.Nodes[2].Addr())
+
+	v.DelNode(v.RandNode())
+	v.DelNode(v.RandNode())
+	v.DelNode(v.RandNode())
+
+	require.True(t, v.IsEmpty())
 }

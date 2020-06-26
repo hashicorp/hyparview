@@ -54,7 +54,7 @@ func testView(count int) (*Hyparview, []Node) {
 
 func TestShuffleSend(t *testing.T) {
 	hv, ns := testView(2)
-	m := hv.SendShuffle(ns[1])
+	m := hv.composeShuffle(ns[1])
 	require.NotNil(t, m.Active)
 	require.NotNil(t, m.Passive)
 	require.Equal(t, 0, len(m.Active))
