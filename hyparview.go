@@ -148,10 +148,7 @@ func (v *Hyparview) RecvDisconnect(r *DisconnectRequest) {
 		v.Active.DelIndex(idx)
 		v.AddPassive(r.From())
 	}
-	v.PromotePassiveBut(r.From())
-	if v.Active.IsEmpty() {
-		v.Bootstrap()
-	}
+	v.PromotePassiveBut(r.From(), nil)
 }
 
 // RecvNeighbor processes a neighbor, sent during failure recovery
