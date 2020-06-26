@@ -20,8 +20,6 @@ type World struct {
 
 	spinCount  int
 	spinCountM map[string]int
-
-	shuffleTick int
 }
 
 type WorldConfig struct {
@@ -30,7 +28,6 @@ type WorldConfig struct {
 	mortality   int
 	payloads    int
 	iteration   int // count rounds for plot filenames
-	shuffleFreq int
 	failureRate int
 }
 

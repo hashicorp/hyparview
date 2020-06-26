@@ -21,7 +21,6 @@ func simulation(c WorldConfig) *World {
 	for _, me := range ns[1:] {
 		// boot := w.nodes[fmt.Sprintf("n%d", h.Rint(i))]
 		me.SendJoin(w.bootstrap)
-		w.maybeShuffle()
 	}
 
 	// log.Printf("debug: send some gossip messages")
@@ -32,30 +31,17 @@ func simulation(c WorldConfig) *World {
 	}
 
 	for i := 0; i < c.gossips; i++ {
+		for _, c := range w.randNodes() {
+			c.next()
+		}
+
 		// gossip drains all the hyparview messages and sends all the gossip
 		// messages before returning. Also maintains the active view
 		node := w.get(makeID(rand.Intn(len(w.nodes))))
 		p := i + 1
 		node.gossip(p)
 		w.traceRound(p)
-		w.maybeShuffle()
 	}
 
 	return w
-}
-
-func (w *World) maybeShuffle() {
-	if w.shuffleTick < w.config.shuffleFreq {
-		w.shuffleTick += 1
-		return
-	}
-
-	// if (w.totalMessages+w.totalPayloads)%w.config.shuffleFreq != 0 {
-	// 	return
-	// }
-
-	w.shuffleTick = 0
-	for _, n := range w.randNodes() {
-		n.SendShuffle()
-	}
 }

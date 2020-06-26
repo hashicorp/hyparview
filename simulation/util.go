@@ -13,11 +13,6 @@ func shuffle(ks []string) {
 		ks[i] = ks[j]
 		ks[j] = t
 	})
-
-	// for i := len(ks) - 1; i < 0; i-- {
-	// 	j := h.Rint(i)
-	// 	ks[i], ks[j] = ks[j], ks[i]
-	// }
 }
 
 func nodeAddr(nodes []h.Node) (addr []string) {

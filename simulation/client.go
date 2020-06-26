@@ -15,6 +15,8 @@ type Client struct {
 	appHops        int // final value's hops
 	appSeen        int // if app == appSeen, we got every message
 	appWaste       int // count of app messages that didn't change the value
+	shuffleTime    int
+	keepaliveTime  int
 }
 
 func makeClient(w *World, addr string) *Client {
@@ -52,23 +54,56 @@ func (c *Client) shouldFail() bool {
 	return true
 }
 
+// Do the next state of the client
+func (c *Client) next() {
+	if c.shuffleTime == 60 {
+		c.SendShuffle()
+		c.shuffleTime = -1
+	}
+
+	if c.keepaliveTime == 0 {
+		c.SendKeepalives()
+		c.keepaliveTime = -1
+	}
+
+	c.shuffleTime += 1
+	c.keepaliveTime += 1
+}
+
 // Implement the sender interface
 func (c *Client) Send(m h.Message) (*h.NeighborRefuse, error) {
 	if c.shouldFail() {
 		return nil, fmt.Errorf("request error")
 	}
 
-	c.history = append(c.history, m)
+	history := !keepalive(m)
+
+	if history {
+		c.history = append(c.history, m)
+	}
 	peer := c.w.get(m.To().Addr())
 	o := peer.recv(m)
 	if o != nil {
-		c.history = append(c.history, o)
 		if c.shouldFail() {
 			return nil, fmt.Errorf("response error")
+		}
+		if history {
+			c.history = append(c.history, o)
 		}
 	}
 
 	return o, nil
+}
+
+func keepalive(m h.Message) bool {
+	switch v := m.(type) {
+	case *h.NeighborRequest:
+		if v.Keepalive {
+			return false
+		}
+	default:
+	}
+	return true
 }
 
 func (c *Client) Failed(peer h.Node) {

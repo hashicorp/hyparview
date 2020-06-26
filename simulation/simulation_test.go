@@ -49,7 +49,6 @@ func testSimulation(t *testing.T, i int, peers int, seed int64) {
 		peers:       peers,
 		payloads:    30,
 		iteration:   i,
-		shuffleFreq: 100,
 		failureRate: 10,
 		gossips:     200,
 	})
