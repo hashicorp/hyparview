@@ -1,5 +1,9 @@
 package hyparview
 
+import (
+	"math/rand"
+)
+
 type ViewPart struct {
 	Nodes []Node
 	Max   int
@@ -94,11 +98,20 @@ func (v *ViewPart) Shuffled() []Node {
 }
 
 func (v *ViewPart) RandIndex() int {
-	return Rint(len(v.Nodes) - 1)
+	return rand.Intn(len(v.Nodes))
 }
 
 func (v *ViewPart) RandNode() Node {
 	return v.Nodes[v.RandIndex()]
+}
+
+func (v *ViewPart) RandNodeBut(node Node) Node {
+	for _, n := range v.Shuffled() {
+		if !EqualNode(node, n) {
+			return n
+		}
+	}
+	return nil
 }
 
 func (v *ViewPart) ContainsIndex(n Node) int {

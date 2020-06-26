@@ -32,6 +32,10 @@ func TestContains(t *testing.T) {
 	require.Equal(t, "c", v.Nodes[1].Addr())
 	require.Equal(t, "e", v.Nodes[2].Addr())
 
+	n = v.RandNodeBut(v.Nodes[0])
+	require.NotNil(t, n)
+	require.NotEqual(t, "a", n.Addr())
+
 	v.DelNode(v.RandNode())
 	v.DelNode(v.RandNode())
 	v.DelNode(v.RandNode())
