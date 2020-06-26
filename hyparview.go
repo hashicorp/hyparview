@@ -192,7 +192,7 @@ func (v *Hyparview) RecvShuffle(r *ShuffleRequest) {
 	v.repairAsymmetry(r)
 	// If the active view size is one, it means that our only active peer is sender of
 	// this shuffle message
-	if r.TTL >= 0 && !v.Active.IsEmptyBut(r.From()) {
+	if r.TTL > 0 && !v.Active.IsEmptyBut(r.From()) {
 		// Forward to one active non-sender
 		for _, n := range v.Active.Shuffled() {
 			if EqualNode(n, r.From()) || EqualNode(n, r.Origin) {
