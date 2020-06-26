@@ -18,26 +18,43 @@ func makeNodes(n int) []Node {
 	return ns
 }
 
+type wrapper struct {
+	m Message
+	k SendCallback
+}
+
+func wrap(m Message, k SendCallback) wrapper {
+	return wrapper{m: m, k: k}
+}
+
 type sliceSender struct {
-	ms []Message
+	ms []wrapper
 }
 
-func (s *sliceSender) Send(m Message) (*NeighborRefuse, error) {
-	s.ms = append(s.ms, m)
-	return nil, nil
+func (s *sliceSender) Send(m Message, k SendCallback) {
+	s.ms = append(s.ms, wrap(m, k))
 }
 
-func (s *sliceSender) Failed(n Node) {
-}
-
-func (s *sliceSender) Bootstrap() Node {
-	return nil
-}
+func (s *sliceSender) Failed(n Node) {}
+func (s *sliceSender) Bootstrap()    {}
 
 func (s *sliceSender) reset() (ms []Message) {
-	out := s.ms
-	s.ms = []Message{}
-	return out
+	for _, w := range s.ms {
+		ms = append(ms, w.m)
+	}
+	s.ms = []wrapper{}
+	return ms
+}
+
+func (s *sliceSender) deliver(ns map[string]*Hyparview) {
+	for _, w := range s.ms {
+		m := w.m
+		t := m.To()
+		a := t.Addr()
+		r := ns[a].Recv(w.m)
+		w.k(r, nil)
+	}
+	s.reset()
 }
 
 func newSliceSender() *sliceSender {
@@ -154,10 +171,8 @@ func TestNeighborSymmetry(t *testing.T) {
 
 	// Promote passive
 	v["a"].Passive.Add(v["b"].Self)
-	v["a"].PromotePassive()
-	for _, m := range s["a"].reset() {
-		v["b"].Recv(m)
-	}
+	v["a"].PromotePassive(nil)
+	s["a"].deliver(v)
 
 	require.Equal(t, 0, v["a"].Passive.Size())
 	require.Equal(t, v["a"].Self, v["b"].Active.Nodes[0])
