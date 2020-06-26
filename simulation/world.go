@@ -14,12 +14,22 @@ type World struct {
 	bootstrap     h.Node
 	totalMessages int
 	totalPayloads int
+	network       []message
 
 	gossipTotal *gossipRound
 	gossipRound []*gossipRound
 
 	spinCount  int
 	spinCountM map[string]int
+}
+
+func newWorld(c WorldConfig) *World {
+	return &World{
+		config:  &c,
+		nodes:   make(map[string]*Client, c.peers),
+		morgue:  make(map[string]*Client),
+		network: []message{},
+	}
 }
 
 type WorldConfig struct {
@@ -29,6 +39,11 @@ type WorldConfig struct {
 	payloads    int
 	iteration   int // count rounds for plot filenames
 	failureRate int
+}
+
+type message struct {
+	m h.Message
+	k h.SendCallback
 }
 
 func (w *World) get(id string) *Client {
@@ -62,4 +77,29 @@ func (w *World) randNodes() (ns []*Client) {
 		ns = append(ns, w.get(k))
 	}
 	return ns
+}
+
+func (w *World) sendMesg(m h.Message, k h.SendCallback) {
+	w.network = append(w.network, message{m: m, k: k})
+}
+
+func (w *World) deliver() {
+	ms := w.network
+	w.network = []message{}
+	for _, m := range ms {
+		n := w.get(m.m.To().Addr())
+		o := n.recv(m.m)
+
+		from := w.get(m.m.From().Addr())
+		from.callback(o, m.k)
+	}
+}
+
+func (w *World) deliverAll() {
+	for tries := 100; tries > 0; tries-- {
+		w.deliver()
+		if len(w.network) == 0 {
+			break
+		}
+	}
 }
