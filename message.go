@@ -64,10 +64,11 @@ func NewDisconnect(to Node, from Node) *DisconnectRequest {
 func (*DisconnectRequest) Type() string { return "disconnect" }
 
 type NeighborRequest struct {
-	to       Node
-	from     Node
-	Priority bool
-	Join     bool
+	to        Node
+	from      Node
+	Priority  bool
+	Join      bool
+	Keepalive bool
 }
 
 func NewNeighbor(to Node, from Node, priority bool) *NeighborRequest {
@@ -84,6 +85,15 @@ func NewNeighborJoin(to Node, from Node) *NeighborRequest {
 		from:     from,
 		Priority: HighPriority,
 		Join:     true,
+	}
+}
+
+func NewNeighborKeepalive(to Node, from Node) *NeighborRequest {
+	return &NeighborRequest{
+		to:        to,
+		from:      from,
+		Priority:  HighPriority,
+		Keepalive: true,
 	}
 }
 

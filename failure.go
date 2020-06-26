@@ -106,3 +106,10 @@ func (v *Hyparview) repairAsymmetry(m Message) {
 	}
 	v.Active.Add(peer)
 }
+
+// SendKeepalives actively repairs the active view
+func (v *Hyparview) SendKeepalives() {
+	for _, n := range v.Active.Nodes {
+		v.Send(NewNeighborKeepalive(n, v.Self))
+	}
+}
