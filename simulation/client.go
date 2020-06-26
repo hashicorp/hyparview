@@ -71,28 +71,30 @@ func (c *Client) next() {
 }
 
 // Implement the sender interface
-func (c *Client) Send(m h.Message) (*h.NeighborRefuse, error) {
+func (c *Client) Send(m h.Message, k h.SendCallback) {
 	if c.shouldFail() {
-		return nil, fmt.Errorf("request error")
+		k(nil, fmt.Errorf("request error"))
 	}
 
-	history := !keepalive(m)
-
-	if history {
+	if !keepalive(m) {
 		c.history = append(c.history, m)
 	}
-	peer := c.w.get(m.To().Addr())
-	o := peer.recv(m)
-	if o != nil {
+
+	c.w.sendMesg(m, k)
+}
+
+func (c *Client) callback(resp h.Message, k h.SendCallback) {
+	if resp != nil {
 		if c.shouldFail() {
-			return nil, fmt.Errorf("response error")
+			k(nil, fmt.Errorf("response error"))
 		}
-		if history {
-			c.history = append(c.history, o)
+		if !keepalive(resp) {
+			c.history = append(c.history, resp)
 		}
 	}
 
-	return o, nil
+	// This doesn't do anything now, should I just skip it?
+	k(nil, nil)
 }
 
 func keepalive(m h.Message) bool {
@@ -109,8 +111,7 @@ func keepalive(m h.Message) bool {
 func (c *Client) Failed(peer h.Node) {
 }
 
-func (c *Client) Bootstrap() h.Node {
+func (c *Client) Bootstrap() {
 	c.bootstrapCount += 1
 	c.SendJoin(c.w.bootstrap)
-	return c.w.bootstrap
 }
