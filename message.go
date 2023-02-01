@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package hyparview
 
 // Message allows clients to redefine hyparview messages to carry additional meta information
