@@ -1,3 +1,5 @@
+// Copyright IBM Corp. 2019, 2026
+
 package hyparview
 
 // Message allows clients to redefine hyparview messages to carry additional meta information
